@@ -9,10 +9,10 @@ import '../models/tag.dart';
 
 class LocalStationDatasource {
   static const List<String> _apiServers = [
-    'http://api.radio-browser.info/json',
-    'http://nl1.api.radio-browser.info/json',
-    'http://fr1.api.radio-browser.info/json',
-    'http://de1.api.radio-browser.info/json',
+    'https://api.radio-browser.info/json',
+    'https://nl1.api.radio-browser.info/json',
+    'https://fr1.api.radio-browser.info/json',
+    'https://de1.api.radio-browser.info/json',
   ];
 
   static const int _pageSize = 20;
