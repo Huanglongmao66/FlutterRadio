@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/services/station_update_service.dart';
+import 'package:online_fm_radio/features/home/home_page_view_model.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,12 +22,26 @@ class ProfilePage extends StatelessWidget {
         title: const Text('我的'),
         centerTitle: true,
       ),
-      body: ListView(
-        children: [
-          _buildUserProfile(context),
-          _buildFavoritesSection(context),
-          _buildHistorySection(context),
-        ],
+      body: Consumer<StationUpdateService>(
+        builder: (context, updateService, child) {
+          // 更新完成后自动刷新首页数据
+          if (updateService.updateComplete) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Provider.of<HomePageViewModel>(context, listen: false).refresh();
+              _showUpdateResult(context, updateService);
+              updateService.resetState();
+            });
+          }
+
+          return ListView(
+            children: [
+              _buildUserProfile(context),
+              _buildUpdateStationSection(context, updateService),
+              _buildFavoritesSection(context),
+              _buildHistorySection(context),
+            ],
+          );
+        },
       ),
     );
   }
@@ -28,9 +49,9 @@ class ProfilePage extends StatelessWidget {
   Widget _buildUserProfile(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
-      child: Column(
+      child: const Column(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 48,
             backgroundColor: Colors.grey,
             child: Icon(
@@ -39,25 +60,128 @@ class ProfilePage extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'FM Radio 用户',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '在线收听电台',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Colors.grey,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildUpdateStationSection(
+      BuildContext context, StationUpdateService updateService) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.cloud_download, size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '电台数据',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (updateService.isUpdating)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    TextButton.icon(
+                      onPressed: () => _startUpdate(context, updateService),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('更新电台列表'),
+                    ),
+                ],
+              ),
+              if (updateService.isUpdating) ...[
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: updateService.progress > 0
+                      ? updateService.progress
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '正在后台获取电台数据... (${updateService.fetchedCount} / ${updateService.totalCount})',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ] else if (updateService.errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '更新失败: ${updateService.errorMessage}',
+                  style: const TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ] else ...[
+                const SizedBox(height: 4),
+                Text(
+                  '点击更新从服务器获取最新电台列表',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _startUpdate(BuildContext context, StationUpdateService service) {
+    service.updateAllStations();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('正在后台更新电台列表...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showUpdateResult(BuildContext context, StationUpdateService service) {
+    if (service.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('更新失败: ${service.errorMessage}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('更新成功！共获取 ${service.fetchedCount} 个电台'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   Widget _buildFavoritesSection(BuildContext context) {

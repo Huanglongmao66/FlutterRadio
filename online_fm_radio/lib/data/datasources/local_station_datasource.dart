@@ -8,6 +8,8 @@ import '../models/station.dart';
 class LocalStationDatasource {
   static const String _apiBaseUrl = 'https://de1.api.radio-browser.info/json';
   static const int _pageSize = 20;
+  static const int _batchSize = 200;
+  static const int _maxStations = 2000;
 
   final Dio _dio;
   final StationCacheService _cacheService;
@@ -17,22 +19,22 @@ class LocalStationDatasource {
     StationCacheService? cacheService,
   })  : _dio = dio ?? Dio(BaseOptions(
           connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
         )),
         _cacheService = cacheService ?? StationCacheService();
 
+  /// 加载电台：有缓存用缓存，无缓存请求远程
   Future<List<Station>> loadStations({bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final hasCache = await _cacheService.hasCache();
       if (hasCache) {
-        debugPrint('Using cached stations');
         return await _cacheService.getCachedStations();
       }
     }
-
     return await _loadFromApiAndCache();
   }
 
+  /// 分页加载更多
   Future<List<Station>> loadMoreStations(int offset) async {
     try {
       final response = await _dio.get('$_apiBaseUrl/stations', queryParameters: {
@@ -56,6 +58,40 @@ class LocalStationDatasource {
       debugPrint('Failed to load more stations: $e');
     }
     return [];
+  }
+
+  /// 后台批量获取所有电台并替换缓存
+  Future<int> fetchAllAndCache({void Function(int fetched, int total)? onProgress}) async {
+    final allStations = <Station>[];
+    int offset = 0;
+
+    while (offset < _maxStations) {
+      final response = await _dio.get('$_apiBaseUrl/stations', queryParameters: {
+        'limit': _batchSize,
+        'offset': offset,
+        'order': 'votes',
+        'reverse': 'true',
+      });
+
+      if (response.statusCode != 200) break;
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      if (jsonData.isEmpty) break;
+
+      final batch = jsonData
+          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+          .where((station) => station.streamUrl.isNotEmpty)
+          .toList();
+
+      allStations.addAll(batch);
+      onProgress?.call(allStations.length, _maxStations);
+
+      if (jsonData.length < _batchSize) break;
+      offset += _batchSize;
+    }
+
+    await _cacheService.cacheStations(allStations, 1);
+    return allStations.length;
   }
 
   Future<List<Station>> _loadFromApiAndCache() async {

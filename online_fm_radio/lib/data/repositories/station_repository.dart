@@ -15,6 +15,10 @@ class StationRepository {
     return await _datasource.loadMoreStations(offset);
   }
 
+  Future<int> fetchAllAndCache({void Function(int fetched, int total)? onProgress}) async {
+    return await _datasource.fetchAllAndCache(onProgress: onProgress);
+  }
+
   Future<List<Station>> loadByCountry(String countryCode) async {
     return await _datasource.loadByCountry(countryCode);
   }

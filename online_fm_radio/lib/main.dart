@@ -5,6 +5,7 @@ import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/core/services/station_update_service.dart';
 import 'package:online_fm_radio/core/theme/app_theme.dart';
 import 'package:online_fm_radio/core/ui/main_app.dart';
 import 'package:online_fm_radio/features/home/home_page_view_model.dart';
@@ -33,6 +34,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<SleepTimerService>(
           create: (_) => SleepTimerService(),
+        ),
+        ChangeNotifierProvider<StationUpdateService>(
+          create: (_) => StationUpdateService(),
         ),
         ChangeNotifierProvider<HomePageViewModel>(
           create: (_) => HomePageViewModel(),
