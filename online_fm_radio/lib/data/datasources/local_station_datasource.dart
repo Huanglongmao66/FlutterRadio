@@ -18,7 +18,7 @@ class LocalStationDatasource {
 
   static const int _pageSize = 20;
   static const int _batchSize = 200;
-  static const int _maxStations = 2000;
+  static const int _maxStations = 10000;
 
   final Dio _dio;
   final StationCacheService _cacheService;

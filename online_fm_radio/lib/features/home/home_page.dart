@@ -17,9 +17,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final StationRepository _repository = StationRepository();
+  List<Station> _allStations = [];
   List<Station> _recommendedStations = [];
   List<Country> _countries = [];
   List<Language> _languages = [];
+  String? _selectedCountry;
   bool _isLoading = true;
 
   @override
@@ -46,11 +48,29 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _loadRecommendedStations() async {
     try {
-      final allStations = await _repository.loadStations();
-      _recommendedStations = allStations.take(20).toList();
+      _allStations = await _repository.loadStations();
+      _applyCountryFilter();
     } catch (e) {
       debugPrint('Failed to load recommended stations: $e');
     }
+  }
+
+  void _applyCountryFilter() {
+    if (_selectedCountry == null || _selectedCountry!.isEmpty) {
+      _recommendedStations = _allStations.take(50).toList();
+    } else {
+      _recommendedStations = _allStations
+          .where((s) => s.country == _selectedCountry)
+          .take(50)
+          .toList();
+    }
+  }
+
+  void _onCountrySelected(String? country) {
+    setState(() {
+      _selectedCountry = country;
+      _applyCountryFilter();
+    });
   }
 
   Future<void> _loadCountries() async {
@@ -79,9 +99,50 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const AppDrawer(),
-      appBar: const AppTopBar(title: 'Fradoi'),
+      appBar: AppTopBar(
+        title: 'Fradoi',
+        selectedCountry: _selectedCountry,
+        onCountrySelected: _onCountrySelected,
+      ),
       body: Column(
         children: [
+          if (_selectedCountry != null)
+            Material(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.filter_list,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '当前筛选: $_selectedCountry',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => _onCountrySelected(null),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           TabBar(
             controller: _tabController,
             tabs: const [
@@ -110,7 +171,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return const Center(child: CircularProgressIndicator());
     }
     if (stations.isEmpty) {
-      return const Center(child: Text('暂无电台'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.radio, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(_selectedCountry != null
+                ? '$_selectedCountry 暂无电台'
+                : '暂无电台'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -141,6 +213,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       itemCount: _countries.length,
       itemBuilder: (context, index) {
         final country = _countries[index];
+        final isSelected = _selectedCountry == country.name;
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
@@ -158,15 +231,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
           title: Text(
             country.name,
-            style: const TextStyle(fontSize: 18),
-          ),
-          trailing: Text(
-            '${country.stationCount}',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
+              fontSize: 18,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Theme.of(context).colorScheme.primary : null,
             ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${country.stationCount}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right, size: 20),
+            ],
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           onTap: () {
@@ -198,13 +282,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             _capitalize(language.name),
             style: const TextStyle(fontSize: 20),
           ),
-          trailing: Text(
-            '${language.stationCount}',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-            ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${language.stationCount}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right, size: 20),
+            ],
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           onTap: () {

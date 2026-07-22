@@ -27,7 +27,7 @@ class StationUpdateService extends ChangeNotifier {
     _errorMessage = null;
     _updateComplete = false;
     _fetchedCount = 0;
-    _totalCount = 2000;
+    _totalCount = 10000;
     notifyListeners();
 
     try {
