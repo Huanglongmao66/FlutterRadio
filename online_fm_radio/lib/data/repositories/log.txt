@@ -1,0 +1,58 @@
+
+lib/features/search/search_page.dart:51:23: Error: The getter 'language' isn't defined for the class 'Station'.
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'language'.
+              station.language.toLowerCase().contains(_searchKeyword) ||
+                      ^^^^^^^^
+lib/features/home/home_page.dart:42:27: Error: The getter 'language' isn't defined for the class 'Station'.
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'language'.
+          .where((s) => s.language.isNotEmpty)
+                          ^^^^^^^^
+lib/features/home/home_page.dart:102:11: Error: No named parameter with the name 'isFavorite'.
+          isFavorite: Provider.of<FavoritesService>(context).isFavorite(station.id),
+          ^^^^^^^^^^
+lib/shared/components/station_card.dart:11:9: Context: Found this candidate, but the arguments don't match.
+  const StationCard({
+        ^^^^^^^^^^^
+lib/features/favorites/favorites_page.dart:99:9: Error: No named parameter with the name 'url'.
+        url: '',
+        ^^^
+lib/data/models/station.dart:13:9: Context: Found this candidate, but the arguments don't match.
+  const Station({
+        ^^^^^^^
+lib/features/favorites/favorites_page.dart:108:52: Error: The argument type 'String' can't be assigned to the parameter type 'Station'.
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+    final isFavorite = favoritesService.isFavorite(stationId);
+                                                   ^
+lib/core/ui/app_top_bar.dart:51:55: Error: No named parameter with the name 'size'.
+                    ? const CircularProgressIndicator(size: 20)
+                                                      ^^^^
+/opt/hostedtoolcache/flutter/stable-3.24.0-x64/flutter/packages/flutter/lib/src/material/progress_indicator.dart:555:9: Context: Found this candidate, but the arguments don't match.
+  const CircularProgressIndicator({
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/core/ui/app_top_bar.dart:55:43: Error: The method 'updateStations' isn't defined for the class 'StationUpdateService'.
+ - 'StationUpdateService' is from 'package:online_fm_radio/core/services/station_update_service.dart' ('lib/core/services/station_update_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'updateStations'.
+                    : () => updateService.updateStations(context),
+                                          ^^^^^^^^^^^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildRelease'.
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.24.0-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 2m 20s
+Running Gradle task 'assembleRelease'...                          143.2s
+Gradle task assembleRelease failed with exit code 1
+Error: Process completed with exit code 1.
