@@ -6,82 +6,94 @@ Upgrading gradle.properties
 9
 Upgrading gradle.properties
 10
-
+Running Gradle task 'assembleRelease'...                        
 11
-FAILURE: Build failed with an exception.
+Warning: Flutter support for your project's Gradle version (8.7.0) will soon be dropped. Please upgrade your Gradle version to a version of at least 8.14.0 soon.
 12
-
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 13
-* Where:
+
 14
-Build file '/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle' line: 5
+Potential fix: Your project's gradle version is typically defined in the gradle wrapper file. By default, this can be found at /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/gradle/wrapper/gradle-wrapper.properties. 
 15
-
+For more information, see https://docs.gradle.org/current/userguide/gradle_wrapper.html.
 16
-* What went wrong:
+
 17
-An exception occurred applying plugin request [id: 'dev.flutter.flutter-gradle-plugin']
+
 18
-> Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
+FAILURE: Build failed with an exception.
 19
-   > Error: Your project's Gradle version (8.3.0) is lower than Flutter's minimum supported version of 8.7.0. Please upgrade your Gradle version. 
+
 20
-     Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+* Where:
 21
-
+Build file '/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle' line: 5
 22
-     Potential fix: Your project's gradle version is typically defined in the gradle wrapper file. By default, this can be found at /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/gradle/wrapper/gradle-wrapper.properties. 
+
 23
-     For more information, see https://docs.gradle.org/current/userguide/gradle_wrapper.html.
+* What went wrong:
 24
-
+An exception occurred applying plugin request [id: 'dev.flutter.flutter-gradle-plugin']
 25
-
+> Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
 26
-* Try:
+   > Error: Your project's Android Gradle Plugin version (Android Gradle Plugin version 8.3.0) is lower than Flutter's minimum supported version of Android Gradle Plugin version 8.6.0. Please upgrade your Android Gradle Plugin version. 
 27
-> Run with --stacktrace option to get the stack trace.
+     Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 28
-> Run with --info or --debug option to get more log output.
+
 29
-> Run with --scan to get full insights.
+     Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
 30
-> Get more help at https://help.gradle.org.
+     If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
 31
 
 32
-BUILD FAILED in 1m 33s
-33
-Running Gradle task 'assembleRelease'...                        
-34
-Running Gradle task 'assembleRelease'...                           95.0s
-35
 
+33
+* Try:
+34
+> Run with --stacktrace option to get the stack trace.
+35
+> Run with --info or --debug option to get more log output.
 36
-┌─ Flutter Fix ─────────────────────────────────────────────────────────────────────────┐
+> Run with --scan to get full insights.
 37
-│ [!] Starting AGP 9+, only the new DSL interface will be read.                         │
+> Get more help at https://help.gradle.org.
 38
-│ This results in a build failure when applying the Flutter Gradle plugin at            │
+
 39
-│ /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle. │
+BUILD FAILED in 1m 26s
 40
-│                                                                                       │
+Running Gradle task 'assembleRelease'...                           86.7s
 41
-│ To resolve this update flutter or opt out of `android.newDsl`.                        │
+
 42
-│ For instructions on how to opt out, see:                                              │
+┌─ Flutter Fix ─────────────────────────────────────────────────────────────────────────┐
 43
-│ https://developer.android.com/build/releases/agp-9-0-0-release-notes                  │
+│ [!] Starting AGP 9+, only the new DSL interface will be read.                         │
 44
-│                                                                                       │
+│ This results in a build failure when applying the Flutter Gradle plugin at            │
 45
-│ If you are not upgrading to AGP 9+, run `flutter analyze --suggestions` to check for  │
+│ /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle. │
 46
-│ incompatible dependencies.                                                            │
+│                                                                                       │
 47
-└───────────────────────────────────────────────────────────────────────────────────────┘
+│ To resolve this update flutter or opt out of `android.newDsl`.                        │
 48
-Gradle task assembleRelease failed with exit code 1
+│ For instructions on how to opt out, see:                                              │
 49
+│ https://developer.android.com/build/releases/agp-9-0-0-release-notes                  │
+50
+│                                                                                       │
+51
+│ If you are not upgrading to AGP 9+, run `flutter analyze --suggestions` to check for  │
+52
+│ incompatible dependencies.                                                            │
+53
+└───────────────────────────────────────────────────────────────────────────────────────┘
+54
+Gradle task assembleRelease failed with exit code 1
+55
 Error: Process completed with exit code 1.
