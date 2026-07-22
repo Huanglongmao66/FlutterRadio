@@ -3,6 +3,7 @@ class Station {
   final String name;
   final String streamUrl;
   final String country;
+  final String language;
   final String category;
   final String logo;
   final String description;
@@ -15,6 +16,7 @@ class Station {
     required this.name,
     required this.streamUrl,
     required this.country,
+    this.language = '',
     required this.category,
     required this.logo,
     required this.description,
@@ -32,6 +34,7 @@ class Station {
       name: (json['name'] as String?)?.trim() ?? 'Unknown',
       streamUrl: json['url_resolved'] as String? ?? json['url'] as String? ?? '',
       country: json['country'] as String? ?? 'Unknown',
+      language: (json['language'] as String?)?.trim() ?? '',
       category: category,
       logo: json['favicon'] as String? ?? '',
       description: tags.join(', '),
@@ -47,6 +50,7 @@ class Station {
       name: json['name'] as String? ?? '',
       streamUrl: json['streamUrl'] as String? ?? '',
       country: json['country'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       category: json['category'] as String? ?? '',
       logo: json['logo'] as String? ?? '',
       description: json['description'] as String? ?? '',
@@ -59,6 +63,7 @@ class Station {
       'name': name,
       'streamUrl': streamUrl,
       'country': country,
+      'language': language,
       'category': category,
       'logo': logo,
       'description': description,

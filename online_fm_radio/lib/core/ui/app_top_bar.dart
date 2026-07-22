@@ -48,11 +48,15 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             builder: (context, updateService, child) {
               return IconButton(
                 icon: updateService.isUpdating
-                    ? const CircularProgressIndicator(size: 20)
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.download),
                 onPressed: updateService.isUpdating
                     ? null
-                    : () => updateService.updateStations(context),
+                    : () => updateService.updateAllStations(),
               );
             },
           ),

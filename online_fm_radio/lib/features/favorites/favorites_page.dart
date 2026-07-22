@@ -89,23 +89,19 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
   Widget _buildFavoriteStationCard(BuildContext context, String stationId) {
     final historyService = Provider.of<HistoryService>(context, listen: false);
-    final favoritesService = Provider.of<FavoritesService>(context);
-    
+
     final station = historyService.history.firstWhere(
       (s) => s.id == stationId,
       orElse: () => Station(
         id: stationId,
         name: '未知电台',
-        url: '',
+        streamUrl: '',
         logo: '',
         country: '',
-        language: '',
         category: '',
         description: '',
       ),
     );
-
-    final isFavorite = favoritesService.isFavorite(stationId);
 
     return StationCard(
       station: station,

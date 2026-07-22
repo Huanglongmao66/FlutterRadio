@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
-import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -99,9 +97,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final station = stations[index];
         return StationCard(
           station: station,
-          isFavorite: Provider.of<FavoritesService>(context).isFavorite(station.id),
-          onFavorite: () => Provider.of<FavoritesService>(context, listen: false)
-              .toggleFavorite(station.id),
           onTap: () => Navigator.pushNamed(
             context,
             '/player',

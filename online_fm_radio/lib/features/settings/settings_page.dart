@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
-import 'package:online_fm_radio/core/theme/app_theme.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
