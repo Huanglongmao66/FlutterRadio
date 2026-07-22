@@ -1,3 +1,4 @@
+import '../models/country.dart';
 import '../models/station.dart';
 import '../datasources/local_station_datasource.dart';
 
@@ -42,5 +43,9 @@ class StationRepository {
     final countries = stations.map((station) => station.country).toSet().toList();
     countries.sort();
     return countries;
+  }
+
+  Future<List<Country>> loadCountries() async {
+    return await _datasource.loadCountries();
   }
 }

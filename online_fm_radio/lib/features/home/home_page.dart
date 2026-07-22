@@ -45,6 +45,11 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.public),
+            tooltip: '国家列表',
+            onPressed: () => Navigator.pushNamed(context, '/countries'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               Provider.of<HomePageViewModel>(context, listen: false).refresh();

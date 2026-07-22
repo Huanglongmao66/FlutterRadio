@@ -11,6 +11,9 @@ import 'package:online_fm_radio/core/ui/main_app.dart';
 import 'package:online_fm_radio/features/home/home_page_view_model.dart';
 import 'package:online_fm_radio/features/player/player_page.dart';
 import 'package:online_fm_radio/data/models/station.dart';
+import 'package:online_fm_radio/data/models/country.dart';
+import 'package:online_fm_radio/features/countries/country_list_page.dart';
+import 'package:online_fm_radio/features/countries/country_stations_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,6 +57,11 @@ class MyApp extends StatelessWidget {
           '/player': (context) {
             final station = ModalRoute.of(context)?.settings.arguments as Station;
             return PlayerPage(station: station);
+          },
+          '/countries': (context) => const CountryListPage(),
+          '/country_stations': (context) {
+            final country = ModalRoute.of(context)?.settings.arguments as Country;
+            return CountryStationsPage(country: country!);
           },
         },
       ),

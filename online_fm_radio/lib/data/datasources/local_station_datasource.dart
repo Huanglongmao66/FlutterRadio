@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/station_cache_service.dart';
+import '../models/country.dart';
 import '../models/station.dart';
 
 class LocalStationDatasource {
@@ -180,5 +181,24 @@ class LocalStationDatasource {
     final jsonString = await rootBundle.loadString('assets/data/stations.json');
     final jsonData = json.decode(jsonString) as List<dynamic>;
     return jsonData.map((json) => Station.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<Country>> loadCountries() async {
+    try {
+      final response = await _request('countries', queryParameters: {
+        'order': 'stationcount',
+        'reverse': 'true',
+        'hidebroken': 'true',
+      });
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      return jsonData
+          .map((json) => Country.fromJson(json as Map<String, dynamic>))
+          .where((country) => country.name.isNotEmpty && country.stationCount > 0)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load countries: $e');
+    }
+    return [];
   }
 }
