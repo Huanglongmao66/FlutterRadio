@@ -1,5 +1,6 @@
 import '../models/country.dart';
 import '../models/station.dart';
+import '../models/tag.dart';
 import '../datasources/local_station_datasource.dart';
 
 class StationRepository {
@@ -47,5 +48,13 @@ class StationRepository {
 
   Future<List<Country>> loadCountries() async {
     return await _datasource.loadCountries();
+  }
+
+  Future<List<Tag>> loadTags() async {
+    return await _datasource.loadTags();
+  }
+
+  Future<List<Station>> loadByTag(String tag) async {
+    return await _datasource.loadByTag(tag);
   }
 }

@@ -5,13 +5,14 @@ import 'package:flutter/services.dart';
 import '../../core/services/station_cache_service.dart';
 import '../models/country.dart';
 import '../models/station.dart';
+import '../models/tag.dart';
 
 class LocalStationDatasource {
   static const List<String> _apiServers = [
-    'https://api.radio-browser.info/json',
-    'https://nl1.api.radio-browser.info/json',
-    'https://fr1.api.radio-browser.info/json',
-    'https://de1.api.radio-browser.info/json',
+    'http://api.radio-browser.info/json',
+    'http://nl1.api.radio-browser.info/json',
+    'http://fr1.api.radio-browser.info/json',
+    'http://de1.api.radio-browser.info/json',
   ];
 
   static const int _pageSize = 20;
@@ -160,6 +161,25 @@ class LocalStationDatasource {
     return [];
   }
 
+  Future<List<Station>> loadByTag(String tag) async {
+    try {
+      final response = await _request('stations/bytag/$tag', queryParameters: {
+        'limit': 50,
+        'order': 'votes',
+        'reverse': 'true',
+      });
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      return jsonData
+          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+          .where((station) => station.streamUrl.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load by tag: $e');
+    }
+    return [];
+  }
+
   Future<List<Station>> searchStations(String query) async {
     try {
       final response = await _request('stations/byname/${Uri.encodeComponent(query)}', queryParameters: {
@@ -198,6 +218,25 @@ class LocalStationDatasource {
           .toList();
     } catch (e) {
       debugPrint('Failed to load countries: $e');
+    }
+    return [];
+  }
+
+  Future<List<Tag>> loadTags() async {
+    try {
+      final response = await _request('tags', queryParameters: {
+        'order': 'stationcount',
+        'reverse': 'true',
+        'hidebroken': 'true',
+      });
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      return jsonData
+          .map((json) => Tag.fromJson(json as Map<String, dynamic>))
+          .where((tag) => tag.name.isNotEmpty && tag.stationCount > 0)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load tags: $e');
     }
     return [];
   }
