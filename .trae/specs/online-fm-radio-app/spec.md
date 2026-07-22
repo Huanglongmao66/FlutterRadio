@@ -1,5 +1,18 @@
 # 在线 FM 广播 APP Spec
 
+## 项目说明
+本项目使用 Flutter 3.x / Dart 3.x 开发一款可在 Android 与 iOS 上运行的在线 FM 广播收听应用。用户无需 FM 硬件即可在手机上随时收听全球各类电台(新闻、流行、古典、谈话等),并享受收藏、分类浏览、后台播放、定时关闭等现代流媒体体验。内置示例频道数据可离线演示,后续可平滑切换到远程 API。
+
+## 技术要点
+- **跨平台框架**:Flutter 3.x + Dart 3.x,目标平台 Android / iOS
+- **音频播放**:`just_audio` 处理 HTTP / HLS / ICY 流,支持缓冲、错误恢复与码率自适应
+- **后台播放与媒体会话**:`audio_service` 实现 Android Foreground Service 与 iOS `MPNowPlayingInfoCenter` / `MPRemoteCommandCenter`,锁屏与通知栏可控
+- **状态管理**:`provider`(或可切换 `riverpod`)管理全局 `PlayerService` / `FavoritesService` / `HistoryService` / `SleepTimerService`
+- **本地持久化**:`shared_preferences` 存储收藏与最近播放;`path_provider` 用于未来扩展
+- **网络**:`dio` 封装请求,内置重试与超时;`cached_network_image` 缓存频道封面
+- **UI 规范**:Material 3,支持浅色/深色主题,响应式布局适配手机/平板
+- **工程化**:`flutter_lints` 静态检查、`flutter analyze`、`flutter test` 单元/Widget 测试,CI 通过 `flutter build apk` / `flutter build ios --no-codesign`
+
 ## Why
 为用户提供一个使用 Flutter 开发的、可在移动端流畅收听全球在线 FM 广播频道的应用,解决传统 FM 受地域限制、信号差、无法随时收听的问题,同时提供收藏、分类浏览和后台播放等现代流媒体体验。
 
@@ -16,6 +29,15 @@
 - Affected specs: 无(全新项目)
 - Affected code: 新建 Flutter 项目 `online_fm_radio/` 下全部源码
 - 主要技术栈: Flutter 3.x、Dart 3.x、`just_audio` + `audio_service`(音频/后台)、`provider` 或 `riverpod`(状态管理)、`shared_preferences`(本地持久化)、`dio`(网络请求)
+
+## APP 使用说明
+- **首页**:进入 APP 默认显示"全部"分类下的频道列表,可点击顶部筛选条切换分类(流行/新闻/古典/谈话)或地区,搜索框输入关键字实时过滤
+- **播放**:点击任一频道卡片进入播放页,自动开始缓冲播放;播放页可暂停/继续、查看缓冲状态、收藏或启动 Sleep Timer
+- **收藏**:在频道卡片或播放页点击心形图标即可收藏;在底部导航"我的"中查看已收藏频道
+- **最近播放**:"我的"页底部展示最近播放过的 10 个频道,便于快速回到上次听的电台
+- **后台播放**:播放过程中按 Home 键或切换其他 APP,音频继续播放;系统通知/锁屏卡片显示频道名与播放暂停按钮
+- **定时关闭**:在播放页点击"定时关闭"选择 15 / 30 / 60 分钟或自定义时长,到达时间自动停止;倒计时未结束可点击取消
+- **错误处理**:网络异常时播放页显示错误提示,点击"重试"重新加载流
 
 ## ADDED Requirements
 

@@ -1,5 +1,17 @@
 # Tasks
 
+## 开发进度
+> 整体进度 = 已完成任务数 / 总任务数。状态: ⬜ 未开始 / 🟡 进行中 / ✅ 已完成
+
+- 总体进度: 0 / 8 (0%)
+- 里程碑:
+  - M1 基础工程搭建:Task 1、2
+  - M2 核心服务:Task 3
+  - M3 UI 完整:Task 4、5、6
+  - M4 后台播放与发布:Task 7、8
+
+## 任务列表
+
 - [ ] Task 1: 初始化 Flutter 项目骨架
   - [ ] SubTask 1.1: 使用 `flutter create` 创建项目 `online_fm_radio`,组织目录结构(`lib/core`、`lib/data`、`lib/features`、`lib/shared`)
   - [ ] SubTask 1.2: 在 `pubspec.yaml` 中添加依赖:`just_audio`、`audio_service`、`provider`(或 `riverpod`)、`shared_preferences`、`dio`、`cached_network_image`
@@ -28,7 +40,7 @@
 - [ ] Task 6: "我的"页面(收藏与历史)
   - [ ] SubTask 6.1: 实现 `FavoritesPage` 展示已收藏频道
   - [ ] SubTask 6.2: 实现 `HistorySection` 展示最近播放
-  - [ ] SubTask 6.2: 底部导航整合(首页 / 我的)
+  - [ ] SubTask 6.3: 底部导航整合(首页 / 我的)
 
 - [ ] Task 7: 后台播放与媒体通知
   - [ ] SubTask 7.1: 注册 `audio_service` 后台任务,配置 Android `ForegroundService` 与 iOS 音频会话
