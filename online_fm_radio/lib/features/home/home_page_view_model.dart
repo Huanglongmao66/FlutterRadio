@@ -16,7 +16,11 @@ class HomePageViewModel extends ChangeNotifier {
   String _searchKeyword = '';
   bool _isLoading = true;
   bool _isSearching = false;
+  bool _isLoadingMore = false;
+  bool _hasMoreData = true;
   String? _errorMessage;
+  int _currentOffset = 0;
+  static const int _pageSize = 20;
 
   Timer? _searchDebounce;
 
@@ -28,6 +32,8 @@ class HomePageViewModel extends ChangeNotifier {
   String get searchKeyword => _searchKeyword;
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMoreData => _hasMoreData;
   String? get errorMessage => _errorMessage;
 
   HomePageViewModel({StationRepository? stationRepository})
@@ -45,12 +51,41 @@ class HomePageViewModel extends ChangeNotifier {
       _filteredStations = _allStations;
       _categories = await _stationRepository.getCategories();
       _countries = await _stationRepository.getCountries();
+      _currentOffset = _allStations.length;
+      _hasMoreData = _allStations.length >= _pageSize;
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load stations: $e';
       _filteredStations = [];
+      _hasMoreData = false;
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (_isLoadingMore || !_hasMoreData || _searchKeyword.isNotEmpty) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final newStations = await _stationRepository.loadMoreStations(_currentOffset);
+
+      if (newStations.isEmpty) {
+        _hasMoreData = false;
+      } else {
+        _allStations.addAll(newStations);
+        _currentOffset += newStations.length;
+        _hasMoreData = newStations.length >= _pageSize;
+        _filterStations();
+      }
+    } catch (e) {
+      debugPrint('Failed to load more: $e');
+      _hasMoreData = false;
+    } finally {
+      _isLoadingMore = false;
       notifyListeners();
     }
   }
@@ -135,7 +170,8 @@ class HomePageViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    _stationRepository.clearCache();
+    _currentOffset = 0;
+    _hasMoreData = true;
     await _init();
   }
 

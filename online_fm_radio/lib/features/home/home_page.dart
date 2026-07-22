@@ -4,8 +4,38 @@ import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 import 'package:online_fm_radio/features/home/home_page_view_model.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final viewModel = Provider.of<HomePageViewModel>(context, listen: false);
+      if (!viewModel.isLoadingMore && viewModel.hasMoreData) {
+        viewModel.loadMore();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +102,7 @@ class HomePage extends StatelessWidget {
             );
           }
 
-          if (viewModel.errorMessage != null) {
+          if (viewModel.errorMessage != null && viewModel.filteredStations.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -111,8 +141,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryFilter(
-      BuildContext context, HomePageViewModel viewModel) {
+  Widget _buildCategoryFilter(BuildContext context, HomePageViewModel viewModel) {
     return SizedBox(
       height: 50,
       child: ListView(
@@ -136,8 +165,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildCountryFilter(
-      BuildContext context, HomePageViewModel viewModel) {
+  Widget _buildCountryFilter(BuildContext context, HomePageViewModel viewModel) {
     return SizedBox(
       height: 50,
       child: ListView(
@@ -192,9 +220,19 @@ class HomePage extends StatelessWidget {
     }
 
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: viewModel.filteredStations.length,
+      itemCount: viewModel.filteredStations.length + (viewModel.isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == viewModel.filteredStations.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
         final station = viewModel.filteredStations[index];
         return StationCard(
           station: station,

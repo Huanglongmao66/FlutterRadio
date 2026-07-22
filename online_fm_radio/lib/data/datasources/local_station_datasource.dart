@@ -2,39 +2,85 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../core/services/station_cache_service.dart';
 import '../models/station.dart';
 
 class LocalStationDatasource {
   static const String _apiBaseUrl = 'https://de1.api.radio-browser.info/json';
-  final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  static const int _pageSize = 20;
 
-  Future<List<Station>> loadStations() async {
+  final Dio _dio;
+  final StationCacheService _cacheService;
+
+  LocalStationDatasource({
+    Dio? dio,
+    StationCacheService? cacheService,
+  })  : _dio = dio ?? Dio(BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        )),
+        _cacheService = cacheService ?? StationCacheService();
+
+  Future<List<Station>> loadStations({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final hasCache = await _cacheService.hasCache();
+      if (hasCache) {
+        debugPrint('Using cached stations');
+        return await _cacheService.getCachedStations();
+      }
+    }
+
+    return await _loadFromApiAndCache();
+  }
+
+  Future<List<Station>> loadMoreStations(int offset) async {
     try {
-      return await _loadFromApi();
+      final response = await _dio.get('$_apiBaseUrl/stations', queryParameters: {
+        'limit': _pageSize,
+        'offset': offset,
+        'order': 'votes',
+        'reverse': 'true',
+      });
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = response.data as List<dynamic>;
+        final stations = jsonData
+            .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+            .where((station) => station.streamUrl.isNotEmpty)
+            .toList();
+
+        await _cacheService.appendStations(stations);
+        return stations;
+      }
+    } catch (e) {
+      debugPrint('Failed to load more stations: $e');
+    }
+    return [];
+  }
+
+  Future<List<Station>> _loadFromApiAndCache() async {
+    try {
+      final response = await _dio.get('$_apiBaseUrl/stations', queryParameters: {
+        'limit': _pageSize,
+        'order': 'votes',
+        'reverse': 'true',
+      });
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = response.data as List<dynamic>;
+        final stations = jsonData
+            .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+            .where((station) => station.streamUrl.isNotEmpty)
+            .toList();
+
+        await _cacheService.cacheStations(stations, 1);
+        return stations;
+      } else {
+        throw Exception('Failed to load stations: ${response.statusCode}');
+      }
     } catch (e) {
       debugPrint('Failed to load from API: $e, falling back to local data');
       return await _loadFromLocalAsset();
-    }
-  }
-
-  Future<List<Station>> _loadFromApi() async {
-    final response = await _dio.get('$_apiBaseUrl/stations', queryParameters: {
-      'limit': 100,
-      'order': 'votes',
-      'reverse': 'true',
-    });
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = response.data as List<dynamic>;
-      return jsonData
-          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
-          .where((station) => station.streamUrl.isNotEmpty)
-          .toList();
-    } else {
-      throw Exception('Failed to load stations: ${response.statusCode}');
     }
   }
 
@@ -55,13 +101,11 @@ class LocalStationDatasource {
             .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
             .where((station) => station.streamUrl.isNotEmpty)
             .toList();
-      } else {
-        return [];
       }
     } catch (e) {
       debugPrint('Failed to load by country: $e');
-      return [];
     }
+    return [];
   }
 
   Future<List<Station>> searchStations(String query) async {
@@ -77,13 +121,11 @@ class LocalStationDatasource {
             .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
             .where((station) => station.streamUrl.isNotEmpty)
             .toList();
-      } else {
-        return [];
       }
     } catch (e) {
       debugPrint('Failed to search stations: $e');
-      return [];
     }
+    return [];
   }
 
   Future<List<Station>> _loadFromLocalAsset() async {
