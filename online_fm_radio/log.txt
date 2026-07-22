@@ -1,0 +1,87 @@
+Run cd online_fm_radio && flutter build apk --release
+7
+Upgrading build.gradle
+8
+Upgrading gradle.properties
+9
+Upgrading gradle.properties
+10
+
+11
+FAILURE: Build failed with an exception.
+12
+
+13
+* Where:
+14
+Build file '/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle' line: 5
+15
+
+16
+* What went wrong:
+17
+An exception occurred applying plugin request [id: 'dev.flutter.flutter-gradle-plugin']
+18
+> Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
+19
+   > Error: Your project's Gradle version (8.3.0) is lower than Flutter's minimum supported version of 8.7.0. Please upgrade your Gradle version. 
+20
+     Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+21
+
+22
+     Potential fix: Your project's gradle version is typically defined in the gradle wrapper file. By default, this can be found at /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/gradle/wrapper/gradle-wrapper.properties. 
+23
+     For more information, see https://docs.gradle.org/current/userguide/gradle_wrapper.html.
+24
+
+25
+
+26
+* Try:
+27
+> Run with --stacktrace option to get the stack trace.
+28
+> Run with --info or --debug option to get more log output.
+29
+> Run with --scan to get full insights.
+30
+> Get more help at https://help.gradle.org.
+31
+
+32
+BUILD FAILED in 1m 33s
+33
+Running Gradle task 'assembleRelease'...                        
+34
+Running Gradle task 'assembleRelease'...                           95.0s
+35
+
+36
+┌─ Flutter Fix ─────────────────────────────────────────────────────────────────────────┐
+37
+│ [!] Starting AGP 9+, only the new DSL interface will be read.                         │
+38
+│ This results in a build failure when applying the Flutter Gradle plugin at            │
+39
+│ /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/app/build.gradle. │
+40
+│                                                                                       │
+41
+│ To resolve this update flutter or opt out of `android.newDsl`.                        │
+42
+│ For instructions on how to opt out, see:                                              │
+43
+│ https://developer.android.com/build/releases/agp-9-0-0-release-notes                  │
+44
+│                                                                                       │
+45
+│ If you are not upgrading to AGP 9+, run `flutter analyze --suggestions` to check for  │
+46
+│ incompatible dependencies.                                                            │
+47
+└───────────────────────────────────────────────────────────────────────────────────────┘
+48
+Gradle task assembleRelease failed with exit code 1
+49
+Error: Process completed with exit code 1.
