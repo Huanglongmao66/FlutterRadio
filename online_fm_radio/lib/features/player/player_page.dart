@@ -5,6 +5,7 @@ import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/core/theme/app_theme.dart';
 
 class PlayerPage extends StatelessWidget {
   final Station station;
@@ -14,27 +15,30 @@ class PlayerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(context),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildStationImage(context),
-                    _buildStationInfo(context),
-                    _buildBufferingIndicator(context),
-                    _buildErrorState(context),
-                    _buildPlaybackControls(context),
-                    _buildVolumeControl(context),
-                    _buildActionButtons(context),
-                  ],
+      body: Container(
+        decoration: AppTheme.playerGradientBackground,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildTopBar(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildBrandText(),
+                      _buildStationImage(context),
+                      _buildStationInfo(context),
+                      _buildBufferingIndicator(context),
+                      _buildErrorState(context),
+                      _buildPlaybackControls(context),
+                      _buildVolumeControl(context),
+                      _buildActionButtons(context),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -46,7 +50,7 @@ class PlayerPage extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, size: 28),
+            icon: const Icon(Icons.arrow_back, size: 28, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
           const Spacer(),
@@ -55,14 +59,28 @@ class PlayerPage extends StatelessWidget {
               if (!timerService.isActive) return const SizedBox.shrink();
               return Text(
                 _formatDuration(timerService.remaining!),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.white,
                 ),
               );
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBrandText() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Text(
+        'Fradoi',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Colors.white.withOpacity(0.6),
+        ),
       ),
     );
   }
@@ -82,10 +100,13 @@ class PlayerPage extends StatelessWidget {
             height: 280,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              color: Theme.of(context).colorScheme.surface,
+              gradient: AppTheme.primaryGradient,
             ),
             child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 3),
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: Colors.white,
+              ),
             ),
           ),
           errorWidget: (context, url, error) => Container(
@@ -93,13 +114,13 @@ class PlayerPage extends StatelessWidget {
             height: 280,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              color: Theme.of(context).colorScheme.surface,
+              gradient: AppTheme.primaryGradient,
             ),
             child: const Center(
               child: Icon(
                 Icons.radio,
                 size: 80,
-                color: Colors.grey,
+                color: Colors.white,
               ),
             ),
           ),
@@ -115,10 +136,10 @@ class PlayerPage extends StatelessWidget {
         children: [
           Text(
             station.name,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.white,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,
@@ -128,18 +149,18 @@ class PlayerPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+              const Icon(Icons.location_on, size: 16, color: Colors.white70),
               const SizedBox(width: 4),
               Text(
                 station.country,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.tag, size: 16, color: Colors.grey),
+              const Icon(Icons.tag, size: 16, color: Colors.white70),
               const SizedBox(width: 4),
               Text(
                 station.category,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
               ),
             ],
           ),
@@ -149,7 +170,7 @@ class PlayerPage extends StatelessWidget {
               station.description,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Colors.white.withOpacity(0.7),
               ),
               textAlign: TextAlign.center,
               maxLines: 3,
@@ -169,13 +190,16 @@ class PlayerPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           child: Column(
             children: [
-              const LinearProgressIndicator(),
+              const LinearProgressIndicator(
+                backgroundColor: Colors.white12,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 '缓冲中...',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -195,7 +219,7 @@ class PlayerPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: Colors.red[100],
+              color: Colors.red.withOpacity(0.2),
             ),
             child: Column(
               children: [
@@ -205,12 +229,12 @@ class PlayerPage extends StatelessWidget {
                   color: Colors.red,
                 ),
                 const SizedBox(height: 12),
-                Text(
+                const Text(
                   '播放失败',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -230,10 +254,11 @@ class PlayerPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
+                    backgroundColor: const Color(0xFF6366F1),
                   ),
                   child: const Text(
                     '重试',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
               ],
@@ -253,9 +278,8 @@ class PlayerPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.skip_previous, size: 40),
+                icon: const Icon(Icons.skip_previous, size: 40, color: Colors.white),
                 onPressed: () {},
-                color: Theme.of(context).colorScheme.onSurface,
               ),
               const SizedBox(width: 32),
               GestureDetector(
@@ -275,10 +299,10 @@ class PlayerPage extends StatelessWidget {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.primary,
+                    gradient: AppTheme.primaryGradient,
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        color: const Color(0xFF6366F1).withOpacity(0.4),
                         blurRadius: 20,
                         spreadRadius: 10,
                       ),
@@ -295,9 +319,8 @@ class PlayerPage extends StatelessWidget {
               ),
               const SizedBox(width: 32),
               IconButton(
-                icon: const Icon(Icons.skip_next, size: 40),
+                icon: const Icon(Icons.skip_next, size: 40, color: Colors.white),
                 onPressed: () {},
-                color: Theme.of(context).colorScheme.onSurface,
               ),
             ],
           ),
@@ -318,7 +341,7 @@ class PlayerPage extends StatelessWidget {
                   Icon(
                     Icons.volume_mute,
                     size: 20,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Colors.white.withOpacity(0.6),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -327,16 +350,16 @@ class PlayerPage extends StatelessWidget {
                       onChanged: (value) => playerService.setVolume(value),
                       min: 0.0,
                       max: 1.0,
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      inactiveColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                      thumbColor: Theme.of(context).colorScheme.primary,
+                      activeColor: Colors.white,
+                      inactiveColor: Colors.white.withOpacity(0.2),
+                      thumbColor: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Icon(
                     Icons.volume_up,
                     size: 20,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ],
               ),
@@ -345,7 +368,7 @@ class PlayerPage extends StatelessWidget {
                 '${(playerService.volume * 100).round()}%',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Colors.white.withOpacity(0.6),
                 ),
               ),
             ],
@@ -380,6 +403,13 @@ class PlayerPage extends StatelessWidget {
             () => _showSleepTimerDialog(context),
             isActive: Provider.of<SleepTimerService>(context).isActive,
           ),
+          const SizedBox(width: 48),
+          _buildActionButton(
+            context,
+            Icons.more_vert,
+            '更多',
+            () {},
+          ),
         ],
       ),
     );
@@ -401,16 +431,16 @@ class PlayerPage extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isActive
-                ? (activeColor ?? Theme.of(context).colorScheme.primary).withOpacity(0.1)
-                : Theme.of(context).colorScheme.surface,
+                ? (activeColor ?? const Color(0xFF6366F1)).withOpacity(0.2)
+                : Colors.white.withOpacity(0.1),
           ),
           child: IconButton(
             icon: Icon(
               icon,
               size: 28,
               color: isActive
-                  ? (activeColor ?? Theme.of(context).colorScheme.primary)
-                  : Theme.of(context).colorScheme.onSurface,
+                  ? (activeColor ?? const Color(0xFF6366F1))
+                  : Colors.white,
             ),
             onPressed: onPressed,
           ),
@@ -420,7 +450,7 @@ class PlayerPage extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            color: Colors.white.withOpacity(0.6),
           ),
         ),
       ],
@@ -434,18 +464,19 @@ class PlayerPage extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('定时关闭'),
+          backgroundColor: const Color(0xFF1A1A2E),
+          title: const Text('定时关闭', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (timerService.isActive) ...[
                 Text(
                   '剩余时间: ${_formatDuration(timerService.remaining!)}',
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
                 ),
                 const SizedBox(height: 16),
               ],
-              const Text('选择关闭时间:'),
+              const Text('选择关闭时间:', style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -463,7 +494,7 @@ class PlayerPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
+              child: const Text('取消', style: TextStyle(color: Colors.white70)),
             ),
             if (timerService.isActive)
               TextButton(
@@ -471,7 +502,7 @@ class PlayerPage extends StatelessWidget {
                   timerService.cancel();
                   Navigator.pop(context);
                 },
-                child: const Text('关闭定时'),
+                child: const Text('关闭定时', style: TextStyle(color: Colors.red)),
               ),
           ],
         );
@@ -491,8 +522,9 @@ class PlayerPage extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        backgroundColor: const Color(0xFF6366F1),
       ),
-      child: Text(label),
+      child: Text(label, style: const TextStyle(color: Colors.white)),
     );
   }
 

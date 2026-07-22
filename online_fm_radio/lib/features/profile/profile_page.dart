@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/station_update_service.dart';
+import 'package:online_fm_radio/core/ui/app_drawer.dart';
+import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/features/home/home_page_view_model.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
@@ -18,13 +20,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('我的'),
-        centerTitle: true,
-      ),
+      drawer: const AppDrawer(),
+      appBar: const AppTopBar(title: '我的'),
       body: Consumer<StationUpdateService>(
         builder: (context, updateService, child) {
-          // 更新完成后自动刷新首页数据
           if (updateService.updateComplete) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Provider.of<HomePageViewModel>(context, listen: false).refresh();
@@ -36,6 +35,7 @@ class _ProfilePageState extends State<ProfilePage> {
           return ListView(
             children: [
               _buildUserProfile(context),
+              _buildSettingsSection(context),
               _buildUpdateStationSection(context, updateService),
               _buildFavoritesSection(context),
               _buildHistorySection(context),
@@ -53,7 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           CircleAvatar(
             radius: 48,
-            backgroundColor: Colors.grey,
+            backgroundColor: Color(0xFF6366F1),
             child: Icon(
               Icons.person,
               size: 48,
@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SizedBox(height: 16),
           Text(
-            'FM Radio 用户',
+            'Fradoi 用户',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -81,10 +81,53 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildSettingsSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('设置'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => Navigator.pushNamed(context, '/settings'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.help),
+              title: const Text('帮助与反馈'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('帮助与反馈功能开发中')),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('关于'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                showAboutDialog(
+                  context: context,
+                  applicationName: 'Fradoi',
+                  applicationVersion: '1.0.0',
+                  applicationIcon: const Icon(Icons.radio, size: 48),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildUpdateStationSection(
       BuildContext context, StationUpdateService updateService) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),

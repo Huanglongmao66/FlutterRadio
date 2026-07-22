@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:online_fm_radio/core/services/favorites_service.dart';
+import 'package:online_fm_radio/core/ui/app_drawer.dart';
+import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/data/models/station.dart';
+import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
-import 'package:online_fm_radio/features/home/home_page_view_model.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,252 +14,101 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  final ScrollController _scrollController = ScrollController();
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final StationRepository _repository = StationRepository();
+  List<Station> _recommendedStations = [];
+  List<Station> _countryStations = [];
+  List<Station> _languageStations = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _tabController = TabController(length: 3, vsync: this);
+    _loadStations();
+  }
+
+  Future<void> _loadStations() async {
+    setState(() => _isLoading = true);
+    try {
+      final allStations = await _repository.loadStations();
+      _recommendedStations = allStations.take(20).toList();
+      _countryStations = allStations
+          .where((s) => s.country.isNotEmpty)
+          .take(20)
+          .toList();
+      _languageStations = allStations
+          .where((s) => s.language.isNotEmpty)
+          .take(20)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load stations: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      final viewModel = Provider.of<HomePageViewModel>(context, listen: false);
-      if (!viewModel.isLoadingMore && viewModel.hasMoreData) {
-        viewModel.loadMore();
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FM Radio'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tag),
-            tooltip: '标签',
-            onPressed: () => Navigator.pushNamed(context, '/tags'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.public),
-            tooltip: '国家列表',
-            onPressed: () => Navigator.pushNamed(context, '/countries'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              Provider.of<HomePageViewModel>(context, listen: false).refresh();
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: '搜索电台...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: Provider.of<HomePageViewModel>(context).isSearching
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-              onChanged: (value) {
-                Provider.of<HomePageViewModel>(context, listen: false)
-                    .setSearchKeyword(value);
-              },
-            ),
-          ),
-        ),
-      ),
-      body: Consumer<HomePageViewModel>(
-        builder: (context, viewModel, child) {
-          if (viewModel.isLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('正在加载电台列表...'),
-                ],
-              ),
-            );
-          }
-
-          if (viewModel.errorMessage != null && viewModel.filteredStations.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    '加载失败',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    viewModel.errorMessage!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => viewModel.refresh(),
-                    child: const Text('重试'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              _buildCategoryFilter(context, viewModel),
-              _buildCountryFilter(context, viewModel),
-              Expanded(child: _buildStationList(viewModel)),
+      drawer: const AppDrawer(),
+      appBar: const AppTopBar(title: 'Fradoi'),
+      body: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: '推荐'),
+              Tab(text: '国家'),
+              Tab(text: '语言'),
             ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCategoryFilter(BuildContext context, HomePageViewModel viewModel) {
-    return SizedBox(
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _buildFilterChip(
-            context,
-            '全部',
-            viewModel.currentCategory == null,
-            () => viewModel.setCategory(null),
           ),
-          ...viewModel.categories.take(10).map((category) => _buildFilterChip(
-                context,
-                category,
-                viewModel.currentCategory == category,
-                () => viewModel.setCategory(category),
-              )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCountryFilter(BuildContext context, HomePageViewModel viewModel) {
-    return SizedBox(
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _buildFilterChip(
-            context,
-            '全部地区',
-            viewModel.currentCountry == null,
-            () => viewModel.setCountry(null),
-          ),
-          ...viewModel.countries.take(10).map((country) => _buildFilterChip(
-                context,
-                country,
-                viewModel.currentCountry == country,
-                () => viewModel.setCountry(country),
-              )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(
-    BuildContext context,
-    String label,
-    bool isSelected,
-    VoidCallback onPressed,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label, overflow: TextOverflow.ellipsis),
-        selected: isSelected,
-        onSelected: (_) => onPressed(),
-        selectedColor: Theme.of(context).colorScheme.primary,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStationList(HomePageViewModel viewModel) {
-    if (viewModel.filteredStations.isEmpty) {
-      return const Center(
-        child: Text('没有找到匹配的电台'),
-      );
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: viewModel.filteredStations.length + (viewModel.isLoadingMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == viewModel.filteredStations.length) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: CircularProgressIndicator(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildStationList(_recommendedStations),
+                _buildStationList(_countryStations),
+                _buildStationList(_languageStations),
+              ],
             ),
-          );
-        }
+          ),
+        ],
+      ),
+    );
+  }
 
-        final station = viewModel.filteredStations[index];
+  Widget _buildStationList(List<Station> stations) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (stations.isEmpty) {
+      return const Center(child: Text('暂无电台'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: stations.length,
+      itemBuilder: (context, index) {
+        final station = stations[index];
         return StationCard(
           station: station,
-          onTap: () => _navigateToPlayer(context, station),
+          isFavorite: Provider.of<FavoritesService>(context).isFavorite(station.id),
+          onFavorite: () => Provider.of<FavoritesService>(context, listen: false)
+              .toggleFavorite(station.id),
+          onTap: () => Navigator.pushNamed(
+            context,
+            '/player',
+            arguments: station,
+          ),
         );
       },
-    );
-  }
-
-  void _navigateToPlayer(BuildContext context, Station station) {
-    Navigator.pushNamed(
-      context,
-      '/player',
-      arguments: station,
     );
   }
 }

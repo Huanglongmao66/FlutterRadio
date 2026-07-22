@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onTap;
+  final void Function(int) onTap;
 
   const AppBottomNavigation({
     super.key,
@@ -19,7 +19,15 @@ class AppBottomNavigation extends StatelessWidget {
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: '首页',
+          label: '主页',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.explore),
+          label: '探索',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.favorite),
+          label: '收藏',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:online_fm_radio/core/ui/app_bottom_navigation.dart';
 import 'package:online_fm_radio/features/home/home_page.dart';
+import 'package:online_fm_radio/features/explore/explore_page.dart';
+import 'package:online_fm_radio/features/favorites/favorites_page.dart';
 import 'package:online_fm_radio/features/profile/profile_page.dart';
 
 class MainApp extends StatefulWidget {
@@ -15,6 +17,8 @@ class _MainAppState extends State<MainApp> {
 
   final List<Widget> _pages = const [
     HomePage(),
+    ExplorePage(),
+    FavoritesPage(),
     ProfilePage(),
   ];
 
