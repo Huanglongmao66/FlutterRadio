@@ -6,7 +6,6 @@ import 'package:online_fm_radio/data/models/station.dart';
 
 class AudioPlayerTask extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _player = AudioPlayer();
-  Station? _currentStation;
   late StreamSubscription<PlayerState> _playerStateSubscription;
 
   AudioPlayerTask() {
@@ -66,20 +65,17 @@ class AudioPlayerTask extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> stop() async {
     await _player.stop();
-    _currentStation = null;
     playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.stopped,
+      processingState: AudioProcessingState.idle,
       playing: false,
     ));
   }
 
   @override
-  Future<void> skipToNext() async {
-  }
+  Future<void> skipToNext() async {}
 
   @override
-  Future<void> skipToPrevious() async {
-  }
+  Future<void> skipToPrevious() async {}
 
   @override
   Future<void> seek(Duration position) async {
@@ -90,10 +86,16 @@ class AudioPlayerTask extends BaseAudioHandler with SeekHandler {
     await _player.setUrl(url);
   }
 
-  Future<void> playStation(Station station) async {
-    _currentStation = station;
+  Future<void> setVolume(double volume) async {
+    await _player.setVolume(volume);
+  }
 
-    final mediaItem = MediaItem(
+  Future<void> setMediaItem(MediaItem item) async {
+    mediaItem.add(item);
+  }
+
+  Future<void> playStation(Station station) async {
+    final item = MediaItem(
       id: station.id,
       title: station.name,
       artist: station.country,
@@ -102,7 +104,7 @@ class AudioPlayerTask extends BaseAudioHandler with SeekHandler {
       duration: const Duration(days: 1),
     );
 
-    addMediaItem(mediaItem);
+    mediaItem.add(item);
 
     try {
       await _player.setUrl(station.streamUrl);
@@ -112,10 +114,8 @@ class AudioPlayerTask extends BaseAudioHandler with SeekHandler {
     }
   }
 
-  @override
-  Future<void> dispose() async {
+  Future<void> disposePlayer() async {
     await _playerStateSubscription.cancel();
     await _player.dispose();
-    super.dispose();
   }
 }

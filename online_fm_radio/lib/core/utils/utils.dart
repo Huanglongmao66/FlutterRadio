@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 String formatDuration(Duration duration) {
-  if (duration == null || duration.inSeconds <= 0) {
+  if (duration.inSeconds <= 0) {
     return '00:00';
   }
 
@@ -85,9 +86,7 @@ bool isValidEmail(String email) {
 }
 
 String generateId() {
-  return DateTime.now().millisecondsSinceEpoch.toString() +
-      '_' +
-      (DateTime.now().microsecondsSinceEpoch % 1000000).toString();
+  return '${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch % 1000000}';
 }
 
 int calculateAge(DateTime birthDate) {

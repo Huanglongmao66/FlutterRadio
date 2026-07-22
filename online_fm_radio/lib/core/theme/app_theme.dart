@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF6366F1);
-  static const Color primaryLight = Color(0xFF818CF8);
-  static const Color primaryDark = Color(0xFF4F46E5);
+  // Primary: Amber, Secondary: Blue
+  static const Color primaryColor = Color(0xFFF59E0B);
+  static const Color primaryLight = Color(0xFFFCD34D);
+  static const Color primaryDark = Color(0xFFD97706);
 
-  static const Color secondaryColor = Color(0xFFEC4899);
-  static const Color secondaryLight = Color(0xFFF472B6);
-  static const Color secondaryDark = Color(0xFFDB2777);
+  static const Color secondaryColor = Color(0xFF3B82F6);
+  static const Color secondaryLight = Color(0xFF60A5FA);
+  static const Color secondaryDark = Color(0xFF2563EB);
 
   static const Color backgroundColor = Color(0xFFFAFAFA);
   static const Color surfaceColor = Color(0xFFFFFFFF);
@@ -36,7 +37,10 @@ class AppTheme {
   static const double elevationMedium = 4.0;
   static const double elevationLarge = 8.0;
 
-  static ThemeData lightTheme() {
+  static final ThemeData lightTheme = _buildLightTheme();
+  static final ThemeData darkTheme = _buildDarkTheme();
+
+  static ThemeData _buildLightTheme() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -50,11 +54,9 @@ class AppTheme {
         onSecondary: Colors.white,
         secondaryContainer: secondaryLight.withOpacity(0.2),
         onSecondaryContainer: secondaryDark,
-        background: backgroundColor,
-        onBackground: textPrimary,
         surface: surfaceColor,
         onSurface: textPrimary,
-        surfaceVariant: Colors.grey[100]!,
+        surfaceContainerHighest: Colors.grey[100]!,
         onSurfaceVariant: textSecondary,
         error: Colors.red[600]!,
         onError: Colors.white,
@@ -79,7 +81,7 @@ class AppTheme {
     );
   }
 
-  static ThemeData darkTheme() {
+  static ThemeData _buildDarkTheme() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -93,11 +95,9 @@ class AppTheme {
         onSecondary: backgroundColorDark,
         secondaryContainer: secondaryDark.withOpacity(0.3),
         onSecondaryContainer: secondaryLight,
-        background: backgroundColorDark,
-        onBackground: textPrimaryDark,
         surface: surfaceColorDark,
         onSurface: textPrimaryDark,
-        surfaceVariant: Colors.grey[800]!,
+        surfaceContainerHighest: Colors.grey[800]!,
         onSurfaceVariant: textSecondaryDark,
         error: Colors.red[400]!,
         onError: Colors.white,
@@ -236,18 +236,18 @@ class AppTheme {
 
   static BottomNavigationBarThemeData _bottomNavigationBarTheme(Brightness brightness) {
     final bgColor = brightness == Brightness.light ? surfaceColor : surfaceColorDark;
-    final selectedColor = primaryColor;
+    const selectedColor = primaryColor;
     final unselectedColor = brightness == Brightness.light ? textTertiary : textTertiaryDark;
 
     return BottomNavigationBarThemeData(
       backgroundColor: bgColor,
       selectedItemColor: selectedColor,
       unselectedItemColor: unselectedColor,
-      selectedLabelStyle: TextStyle(
+      selectedLabelStyle: const TextStyle(
         fontSize: 12.0,
         fontWeight: FontWeight.w600,
       ),
-      unselectedLabelStyle: TextStyle(
+      unselectedLabelStyle: const TextStyle(
         fontSize: 12.0,
         fontWeight: FontWeight.w400,
       ),
@@ -266,7 +266,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(borderRadiusMedium),
         ),
         elevation: elevationSmall,
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           fontSize: 16.0,
           fontWeight: FontWeight.w600,
         ),
@@ -283,7 +283,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadiusMedium),
         ),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           fontSize: 16.0,
           fontWeight: FontWeight.w600,
         ),
@@ -295,12 +295,12 @@ class AppTheme {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: primaryColor,
-        side: BorderSide(color: primaryColor, width: 2.0),
+        side: const BorderSide(color: primaryColor, width: 2.0),
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadiusMedium),
         ),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           fontSize: 16.0,
           fontWeight: FontWeight.w600,
         ),
@@ -313,7 +313,7 @@ class AppTheme {
       style: TextButton.styleFrom(
         foregroundColor: primaryColor,
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           fontSize: 14.0,
           fontWeight: FontWeight.w500,
         ),
@@ -333,7 +333,7 @@ class AppTheme {
 
   static InputDecorationTheme _inputDecorationTheme(Brightness brightness) {
     final borderColor = brightness == Brightness.light ? dividerColor : dividerColorDark;
-    final focusColor = primaryColor;
+    const focusColor = primaryColor;
     final bgColor = brightness == Brightness.light ? surfaceColor : surfaceColorDark;
     final hintColor = brightness == Brightness.light ? textTertiary : textTertiaryDark;
 
@@ -350,7 +350,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusMedium),
-        borderSide: BorderSide(color: focusColor, width: 2.0),
+        borderSide: const BorderSide(color: focusColor, width: 2.0),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusMedium),
@@ -371,7 +371,7 @@ class AppTheme {
         fontWeight: FontWeight.w500,
         color: brightness == Brightness.light ? textSecondary : textSecondaryDark,
       ),
-      errorStyle: TextStyle(
+      errorStyle: const TextStyle(
         fontSize: 12.0,
         fontWeight: FontWeight.w400,
         color: Colors.red,
@@ -403,11 +403,11 @@ class AppTheme {
       unselectedLabelColor: brightness == Brightness.light ? textTertiary : textTertiaryDark,
       indicatorColor: primaryColor,
       indicatorSize: TabBarIndicatorSize.tab,
-      labelStyle: TextStyle(
+      labelStyle: const TextStyle(
         fontSize: 14.0,
         fontWeight: FontWeight.w600,
       ),
-      unselectedLabelStyle: TextStyle(
+      unselectedLabelStyle: const TextStyle(
         fontSize: 14.0,
         fontWeight: FontWeight.w400,
       ),

@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:online_fm_radio/core/services/audio_player_task.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
 class PlayerService extends ChangeNotifier {
-  AudioHandler? _audioHandler;
+  AudioPlayerTask? _audioHandler;
   Station? _currentStation;
   bool _isPlaying = false;
   bool _isBuffering = false;
@@ -20,7 +21,7 @@ class PlayerService extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   double get volume => _volume;
 
-  void setAudioHandler(AudioHandler handler) {
+  void setAudioHandler(AudioPlayerTask handler) {
     _audioHandler = handler;
     _setupAudioHandlerListeners();
   }
@@ -39,8 +40,8 @@ class PlayerService extends ChangeNotifier {
       notifyListeners();
     });
 
-    _audioHandler!.mediaItem.listen((mediaItem) {
-      if (mediaItem != null) {
+    _audioHandler!.mediaItem.listen((item) {
+      if (item != null) {
         notifyListeners();
       }
     });
@@ -69,7 +70,7 @@ class PlayerService extends ChangeNotifier {
         duration: const Duration(days: 1),
       );
 
-      await _audioHandler!.addMediaItem(mediaItem);
+      await _audioHandler!.setMediaItem(mediaItem);
       await _audioHandler!.setUrl(station.streamUrl);
       await _audioHandler!.play();
     } catch (e) {
@@ -143,7 +144,7 @@ class PlayerService extends ChangeNotifier {
 
   @override
   void dispose() {
-    AudioService.stop();
+    _audioHandler?.disposePlayer();
     super.dispose();
   }
 }
