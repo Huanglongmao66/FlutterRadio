@@ -1,8 +1,6 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/constants/app_constants.dart';
-import 'package:online_fm_radio/core/services/audio_player_task.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
@@ -13,26 +11,12 @@ import 'package:online_fm_radio/features/home/home_page_view_model.dart';
 import 'package:online_fm_radio/features/player/player_page.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  final audioHandler = await AudioService.init(
-    builder: () => AudioPlayerTask(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.online_fm_radio.channel.audio',
-      androidNotificationChannelName: 'Online FM Radio',
-      androidNotificationOngoing: true,
-      androidNotificationIcon: 'mipmap/ic_launcher',
-    ),
-  );
-
-  runApp(MyApp(audioHandler: audioHandler));
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final AudioPlayerTask audioHandler;
-
-  const MyApp({super.key, required this.audioHandler});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +29,7 @@ class MyApp extends StatelessWidget {
           create: (_) => HistoryService()..loadHistory(),
         ),
         ChangeNotifierProvider<PlayerService>(
-          create: (_) => PlayerService()..setAudioHandler(audioHandler),
+          create: (_) => PlayerService(),
         ),
         ChangeNotifierProvider<SleepTimerService>(
           create: (_) => SleepTimerService(),

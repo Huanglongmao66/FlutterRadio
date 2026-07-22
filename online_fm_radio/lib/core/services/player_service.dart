@@ -1,12 +1,13 @@
 import 'dart:async';
 
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:online_fm_radio/core/services/audio_player_task.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
 class PlayerService extends ChangeNotifier {
-  AudioPlayerTask? _audioHandler;
+  final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+
   Station? _currentStation;
   bool _isPlaying = false;
   bool _isBuffering = false;
@@ -21,39 +22,26 @@ class PlayerService extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   double get volume => _volume;
 
-  void setAudioHandler(AudioPlayerTask handler) {
-    _audioHandler = handler;
-    _setupAudioHandlerListeners();
+  PlayerService() {
+    _initPlayer();
   }
 
-  void _setupAudioHandlerListeners() {
-    if (_audioHandler == null) return;
-
-    _audioHandler!.playbackState.listen((state) {
+  void _initPlayer() {
+    _playerStateSubscription = _player.playerStateStream.listen((state) {
       _isPlaying = state.playing;
-      _isBuffering = state.processingState == AudioProcessingState.buffering;
+      _isBuffering = state.processingState == ProcessingState.buffering;
 
-      if (state.processingState == AudioProcessingState.completed) {
+      if (state.processingState == ProcessingState.completed) {
         stop();
       }
 
       notifyListeners();
     });
 
-    _audioHandler!.mediaItem.listen((item) {
-      if (item != null) {
-        notifyListeners();
-      }
-    });
+    _player.setVolume(_volume);
   }
 
   Future<void> play(Station station) async {
-    if (_audioHandler == null) {
-      _errorMessage = 'Audio service not initialized';
-      notifyListeners();
-      return;
-    }
-
     _errorMessage = null;
     _retryCount = 0;
     _currentStation = station;
@@ -61,43 +49,31 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final mediaItem = MediaItem(
-        id: station.id,
-        title: station.name,
-        artist: station.country,
-        album: station.category,
-        artUri: station.logo.isNotEmpty ? Uri.parse(station.logo) : null,
-        duration: const Duration(days: 1),
-      );
-
-      await _audioHandler!.setMediaItem(mediaItem);
-      await _audioHandler!.setUrl(station.streamUrl);
-      await _audioHandler!.play();
+      await _player.setUrl(station.streamUrl);
+      await _player.play();
     } catch (e) {
       _handlePlaybackError(e.toString());
     }
   }
 
   Future<void> pause() async {
-    if (_audioHandler == null || !_isPlaying) return;
+    if (!_isPlaying) return;
 
-    await _audioHandler!.pause();
+    await _player.pause();
     _isPlaying = false;
     notifyListeners();
   }
 
   Future<void> resume() async {
-    if (_audioHandler == null || _isPlaying || _currentStation == null) return;
+    if (_isPlaying || _currentStation == null) return;
 
-    await _audioHandler!.play();
+    await _player.play();
     _isPlaying = true;
     notifyListeners();
   }
 
   Future<void> stop() async {
-    if (_audioHandler == null) return;
-
-    await _audioHandler!.stop();
+    await _player.stop();
     _currentStation = null;
     _isPlaying = false;
     _isBuffering = false;
@@ -125,26 +101,23 @@ class PlayerService extends ChangeNotifier {
   }
 
   Future<void> seek(Duration position) async {
-    if (_audioHandler != null) {
-      await _audioHandler!.seek(position);
-    }
+    await _player.seek(position);
   }
 
-  Stream<Duration?> get positionStream => _audioHandler?.playbackState
-      .map((state) => state.updatePosition) ?? Stream.value(null);
+  Stream<Duration?> get positionStream => _player.positionStream;
 
-  Stream<Duration?> get durationStream => _audioHandler?.mediaItem
-      .map((item) => item?.duration) ?? Stream.value(null);
+  Stream<Duration?> get durationStream => _player.durationStream;
 
   void setVolume(double volume) {
     _volume = volume.clamp(0.0, 1.0);
-    _audioHandler?.setVolume(_volume);
+    _player.setVolume(_volume);
     notifyListeners();
   }
 
   @override
   void dispose() {
-    _audioHandler?.disposePlayer();
+    _playerStateSubscription?.cancel();
+    _player.dispose();
     super.dispose();
   }
 }
