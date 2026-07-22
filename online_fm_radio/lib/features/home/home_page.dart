@@ -13,6 +13,14 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('FM Radio'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Provider.of<HomePageViewModel>(context, listen: false).refresh();
+            },
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
@@ -21,6 +29,19 @@ class HomePage extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: '搜索电台...',
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: Provider.of<HomePageViewModel>(context).isSearching
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -39,7 +60,43 @@ class HomePage extends StatelessWidget {
       body: Consumer<HomePageViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在加载电台列表...'),
+                ],
+              ),
+            );
+          }
+
+          if (viewModel.errorMessage != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    '加载失败',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    viewModel.errorMessage!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => viewModel.refresh(),
+                    child: const Text('重试'),
+                  ),
+                ],
+              ),
+            );
           }
 
           return Column(
@@ -68,7 +125,7 @@ class HomePage extends StatelessWidget {
             viewModel.currentCategory == null,
             () => viewModel.setCategory(null),
           ),
-          ...viewModel.categories.map((category) => _buildFilterChip(
+          ...viewModel.categories.take(10).map((category) => _buildFilterChip(
                 context,
                 category,
                 viewModel.currentCategory == category,
@@ -93,7 +150,7 @@ class HomePage extends StatelessWidget {
             viewModel.currentCountry == null,
             () => viewModel.setCountry(null),
           ),
-          ...viewModel.countries.map((country) => _buildFilterChip(
+          ...viewModel.countries.take(10).map((country) => _buildFilterChip(
                 context,
                 country,
                 viewModel.currentCountry == country,
@@ -113,7 +170,7 @@ class HomePage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
-        label: Text(label),
+        label: Text(label, overflow: TextOverflow.ellipsis),
         selected: isSelected,
         onSelected: (_) => onPressed(),
         selectedColor: Theme.of(context).colorScheme.primary,

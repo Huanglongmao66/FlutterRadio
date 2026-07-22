@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
@@ -14,6 +15,10 @@ class HomePageViewModel extends ChangeNotifier {
   String? _currentCountry;
   String _searchKeyword = '';
   bool _isLoading = true;
+  bool _isSearching = false;
+  String? _errorMessage;
+
+  Timer? _searchDebounce;
 
   List<Station> get filteredStations => _filteredStations;
   List<String> get categories => _categories;
@@ -22,6 +27,8 @@ class HomePageViewModel extends ChangeNotifier {
   String? get currentCountry => _currentCountry;
   String get searchKeyword => _searchKeyword;
   bool get isLoading => _isLoading;
+  bool get isSearching => _isSearching;
+  String? get errorMessage => _errorMessage;
 
   HomePageViewModel({StationRepository? stationRepository})
       : _stationRepository = stationRepository ?? StationRepository() {
@@ -30,6 +37,7 @@ class HomePageViewModel extends ChangeNotifier {
 
   Future<void> _init() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -37,7 +45,9 @@ class HomePageViewModel extends ChangeNotifier {
       _filteredStations = _allStations;
       _categories = await _stationRepository.getCategories();
       _countries = await _stationRepository.getCountries();
+      _errorMessage = null;
     } catch (e) {
+      _errorMessage = 'Failed to load stations: $e';
       _filteredStations = [];
     } finally {
       _isLoading = false;
@@ -57,14 +67,38 @@ class HomePageViewModel extends ChangeNotifier {
 
   void setSearchKeyword(String keyword) {
     _searchKeyword = keyword;
-    _filterStations();
+
+    _searchDebounce?.cancel();
+
+    if (keyword.length >= 2) {
+      _isSearching = true;
+      notifyListeners();
+
+      _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+        _performApiSearch();
+      });
+    } else {
+      _filterStations();
+    }
   }
 
-  void clearFilters() {
-    _currentCategory = null;
-    _currentCountry = null;
-    _searchKeyword = '';
-    _filterStations();
+  Future<void> _performApiSearch() async {
+    if (_searchKeyword.length < 2) {
+      _isSearching = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final results = await _stationRepository.search(_searchKeyword);
+      _filteredStations = results;
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = 'Search failed: $e';
+    } finally {
+      _isSearching = false;
+      notifyListeners();
+    }
   }
 
   void _filterStations() {
@@ -92,7 +126,22 @@ class HomePageViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void refresh() {
-    _init();
+  void clearFilters() {
+    _currentCategory = null;
+    _currentCountry = null;
+    _searchKeyword = '';
+    _filteredStations = _allStations;
+    notifyListeners();
+  }
+
+  Future<void> refresh() async {
+    _stationRepository.clearCache();
+    await _init();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
   }
 }

@@ -2,31 +2,28 @@ import '../models/station.dart';
 import '../datasources/local_station_datasource.dart';
 
 class StationRepository {
-  final LocalStationDatasource _localDatasource;
+  final LocalStationDatasource _datasource;
   List<Station>? _cachedStations;
 
-  StationRepository({LocalStationDatasource? localDatasource})
-      : _localDatasource = localDatasource ?? LocalStationDatasource();
+  StationRepository({LocalStationDatasource? datasource})
+      : _datasource = datasource ?? LocalStationDatasource();
 
   Future<List<Station>> loadStations() async {
     if (_cachedStations != null) {
       return _cachedStations!;
     }
-    _cachedStations = await _localDatasource.loadStations();
+    _cachedStations = await _datasource.loadStations();
     return _cachedStations!;
   }
 
-  Future<List<Station>> filterByCategory(String category) async {
-    final stations = await loadStations();
-    return stations.where((station) => station.category == category).toList();
-  }
-
-  Future<List<Station>> filterByCountry(String country) async {
-    final stations = await loadStations();
-    return stations.where((station) => station.country == country).toList();
+  Future<List<Station>> loadByCountry(String countryCode) async {
+    return await _datasource.loadByCountry(countryCode);
   }
 
   Future<List<Station>> search(String keyword) async {
+    if (keyword.length >= 2) {
+      return await _datasource.searchStations(keyword);
+    }
     final stations = await loadStations();
     final lowerKeyword = keyword.toLowerCase();
     return stations.where((station) {
@@ -39,15 +36,19 @@ class StationRepository {
 
   Future<List<String>> getCategories() async {
     final stations = await loadStations();
-    return stations.map((station) => station.category).toSet().toList();
+    final categories = stations.map((station) => station.category).toSet().toList();
+    categories.sort();
+    return categories;
   }
 
   Future<List<String>> getCountries() async {
     final stations = await loadStations();
-    return stations.map((station) => station.country).toSet().toList();
+    final countries = stations.map((station) => station.country).toSet().toList();
+    countries.sort();
+    return countries;
   }
 
-  Future<List<Station>> loadFromApi() async {
-    return [];
+  void clearCache() {
+    _cachedStations = null;
   }
 }
