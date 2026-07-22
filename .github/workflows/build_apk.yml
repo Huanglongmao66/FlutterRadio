@@ -21,16 +21,14 @@ jobs:
       - name: Get dependencies
         run: cd online_fm_radio && flutter pub get
 
+      - name: Generate app icons
+        run: cd online_fm_radio && flutter pub run flutter_launcher_icons
+
       - name: Build APK
         run: cd online_fm_radio && flutter build apk --release
 
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: v1.0.0
-          name: Release v1.0.0
-          body: Flutter FM Radio APK
-          files: online_fm_radio/build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: app-release-apk
+          path: online_fm_radio/build/app/outputs/flutter-apk/app-release.apk
