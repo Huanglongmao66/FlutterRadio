@@ -1,4 +1,5 @@
 import '../models/country.dart';
+import '../models/language.dart';
 import '../models/station.dart';
 import '../models/tag.dart';
 import '../datasources/local_station_datasource.dart';
@@ -56,5 +57,13 @@ class StationRepository {
 
   Future<List<Station>> loadByTag(String tag) async {
     return await _datasource.loadByTag(tag);
+  }
+
+  Future<List<Language>> loadLanguages() async {
+    return await _datasource.loadLanguages();
+  }
+
+  Future<List<Station>> loadByLanguage(String language) async {
+    return await _datasource.loadByLanguage(language);
   }
 }

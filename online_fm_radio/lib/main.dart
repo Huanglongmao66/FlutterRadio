@@ -14,9 +14,11 @@ import 'package:online_fm_radio/features/search/search_page.dart';
 import 'package:online_fm_radio/features/settings/settings_page.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/models/country.dart';
+import 'package:online_fm_radio/data/models/language.dart';
 import 'package:online_fm_radio/data/models/tag.dart';
 import 'package:online_fm_radio/features/countries/country_list_page.dart';
 import 'package:online_fm_radio/features/countries/country_stations_page.dart';
+import 'package:online_fm_radio/features/languages/language_stations_page.dart';
 import 'package:online_fm_radio/features/tags/tag_list_page.dart';
 import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 
@@ -74,6 +76,10 @@ class MyApp extends StatelessWidget {
           '/tag_stations': (context) {
             final tag = ModalRoute.of(context)?.settings.arguments as Tag;
             return TagStationsPage(tag: tag!);
+          },
+          '/language_stations': (context) {
+            final language = ModalRoute.of(context)?.settings.arguments as Language;
+            return LanguageStationsPage(language: language!);
           },
         },
       ),
