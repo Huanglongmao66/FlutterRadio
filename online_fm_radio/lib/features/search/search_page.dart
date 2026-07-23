@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:online_fm_radio/core/services/station_cache_service.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
@@ -14,43 +16,73 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final StationRepository _repository = StationRepository();
-  List<Station> _stations = [];
-  List<Station> _filteredStations = [];
-  bool _isLoading = false;
-  String _searchKeyword = '';
+  final StationCacheService _cacheService = StationCacheService();
+  List<Station> _results = [];
+  bool _isSearching = false;
+  bool _hasSearched = false;
+  int _totalCached = 0;
+  Timer? _debounce;
+  static const Duration _debounceDuration = Duration(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
-    _loadStations();
+    _loadCacheCount();
   }
 
-  Future<void> _loadStations() async {
-    setState(() => _isLoading = true);
-    try {
-      _stations = await _repository.loadStations();
-      _filteredStations = _stations;
-    } catch (e) {
-      debugPrint('Failed to load stations for search: $e');
-    } finally {
-      setState(() => _isLoading = false);
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCacheCount() async {
+    final hasCache = await _cacheService.hasCache();
+    if (hasCache) {
+      final stations = await _cacheService.getCachedStations();
+      if (mounted) {
+        setState(() {
+          _totalCached = stations.length;
+        });
+      }
     }
   }
 
-  void _filterStations() {
-    _searchKeyword = _searchController.text.trim().toLowerCase();
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    if (value.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _hasSearched = false;
+        _isSearching = false;
+      });
+      return;
+    }
+    setState(() {});
+    _debounce = Timer(_debounceDuration, () => _performSearch(value));
+  }
+
+  Future<void> _performSearch(String keyword) async {
+    if (keyword.trim().isEmpty) return;
     setState(() {
-      if (_searchKeyword.isEmpty) {
-        _filteredStations = _stations;
-      } else {
-        _filteredStations = _stations.where((station) {
-          return station.name.toLowerCase().contains(_searchKeyword) ||
-              station.country.toLowerCase().contains(_searchKeyword) ||
-              station.language.toLowerCase().contains(_searchKeyword) ||
-              station.category.toLowerCase().contains(_searchKeyword);
-        }).toList();
-      }
+      _isSearching = true;
+      _hasSearched = true;
     });
+    try {
+      final results = await _repository.searchCached(keyword);
+      if (mounted) {
+        setState(() {
+          _results = results;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Search failed: $e');
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
   }
 
   @override
@@ -65,6 +97,7 @@ class _SearchPageState extends State<SearchPage> {
       body: Column(
         children: [
           _buildSearchBar(),
+          _buildResultCount(),
           Expanded(
             child: _buildSearchResults(),
           ),
@@ -83,12 +116,41 @@ class _SearchPageState extends State<SearchPage> {
         ),
         child: TextField(
           controller: _searchController,
-          onChanged: (_) => _filterStations(),
-          decoration: const InputDecoration(
-            hintText: '搜索电台、国家、语言...',
-            prefixIcon: Icon(Icons.search),
+          autofocus: true,
+          onChanged: _onSearchChanged,
+          decoration: InputDecoration(
+            hintText: '搜索电台、国家、语言、标签...',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _onSearchChanged('');
+                    },
+                  )
+                : null,
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultCount() {
+    if (!_hasSearched || _isSearching) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '找到 ${_results.length} 个结果',
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[600],
           ),
         ),
       ),
@@ -96,19 +158,45 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildSearchResults() {
-    if (_isLoading) {
+    if (_isSearching) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_filteredStations.isEmpty) {
+    if (!_hasSearched) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.search, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              _totalCached > 0
+                  ? '在 $_totalCached 个缓存电台中搜索'
+                  : '输入关键词开始搜索',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '支持电台名、国家、语言、标签',
+              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_results.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.search_off, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
+            const Text('未找到相关电台'),
+            const SizedBox(height: 8),
             Text(
-              _searchKeyword.isEmpty ? '暂无电台数据' : '未找到相关电台',
+              '试试其他关键词',
+              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -117,9 +205,9 @@ class _SearchPageState extends State<SearchPage> {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _filteredStations.length,
+      itemCount: _results.length,
       itemBuilder: (context, index) {
-        final station = _filteredStations[index];
+        final station = _results[index];
         return StationCard(
           station: station,
           onTap: () => Navigator.pushNamed(

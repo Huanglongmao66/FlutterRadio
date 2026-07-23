@@ -41,6 +41,10 @@ class StationRepository {
     return [];
   }
 
+  Future<List<Station>> searchCached(String keyword) async {
+    return await _datasource.searchCachedStations(keyword);
+  }
+
   Future<List<String>> getCategories() async {
     final stations = await loadStations();
     final categories = stations.map((station) => station.category).toSet().toList();

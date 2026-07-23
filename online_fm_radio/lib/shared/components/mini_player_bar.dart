@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
+import 'package:online_fm_radio/shared/components/station_logo.dart';
 
 /// A persistent mini player bar shown above the bottom navigation.
 /// Displays the currently playing station with a play/pause control and
@@ -32,34 +32,10 @@ class MiniPlayerBar extends StatelessWidget {
               child: Row(
                 children: [
                   // Station logo
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: CachedNetworkImage(
-                      imageUrl: station.logo,
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: 44,
-                        height: 44,
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.radio,
-                          size: 22,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 44,
-                        height: 44,
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.radio,
-                          size: 22,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
+                  StationLogo(
+                    station: station,
+                    size: 44,
+                    borderRadius: 6,
                   ),
                   const SizedBox(width: 12),
                   // Station name + country

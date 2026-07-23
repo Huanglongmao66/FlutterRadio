@@ -230,6 +230,30 @@ class LocalStationDatasource {
     return [];
   }
 
+  /// 从本地缓存的所有电台中搜索。
+  /// 搜索范围：名称、国家、语言、分类、标签描述。
+  /// 优先从缓存搜索；缓存为空时回退到本地资源文件。
+  Future<List<Station>> searchCachedStations(String keyword) async {
+    final trimmed = keyword.trim().toLowerCase();
+    if (trimmed.isEmpty) return [];
+
+    List<Station> allStations;
+    final hasCache = await _cacheService.hasCache();
+    if (hasCache) {
+      allStations = await _cacheService.getCachedStations();
+    } else {
+      allStations = await _loadFromLocalAsset();
+    }
+
+    return allStations.where((s) {
+      return s.name.toLowerCase().contains(trimmed) ||
+          s.country.toLowerCase().contains(trimmed) ||
+          s.language.toLowerCase().contains(trimmed) ||
+          s.category.toLowerCase().contains(trimmed) ||
+          s.description.toLowerCase().contains(trimmed);
+    }).toList();
+  }
+
   Future<List<Station>> _loadFromLocalAsset() async {
     final jsonString = await rootBundle.loadString('assets/data/stations.json');
     final jsonData = json.decode(jsonString) as List<dynamic>;
@@ -238,57 +262,66 @@ class LocalStationDatasource {
 
   Future<List<Country>> loadCountries() async {
     try {
-      final response = await _request('countries', queryParameters: {
-        'order': 'stationcount',
-        'reverse': 'true',
-        'hidebroken': 'true',
-      });
-
-      final List<dynamic> jsonData = response.data as List<dynamic>;
-      return jsonData
-          .map((json) => Country.fromJson(json as Map<String, dynamic>))
-          .where((country) => country.name.isNotEmpty && country.stationCount > 0)
-          .toList();
+      final stations = await loadStations();
+      if (stations.isNotEmpty) {
+        final Map<String, int> countryMap = {};
+        for (final s in stations) {
+          if (s.country.isNotEmpty) {
+            countryMap[s.country] = (countryMap[s.country] ?? 0) + 1;
+          }
+        }
+        final entries = countryMap.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        return entries
+            .map((e) => Country(name: e.key, countryCode: '', stationCount: e.value))
+            .toList();
+      }
     } catch (e) {
-      debugPrint('Failed to load countries: $e');
+      debugPrint('Failed to extract countries from local data: $e');
     }
     return [];
   }
 
   Future<List<Tag>> loadTags() async {
     try {
-      final response = await _request('tags', queryParameters: {
-        'order': 'stationcount',
-        'reverse': 'true',
-        'hidebroken': 'true',
-      });
-
-      final List<dynamic> jsonData = response.data as List<dynamic>;
-      return jsonData
-          .map((json) => Tag.fromJson(json as Map<String, dynamic>))
-          .where((tag) => tag.name.isNotEmpty && tag.stationCount > 0)
-          .toList();
+      final stations = await loadStations();
+      if (stations.isNotEmpty) {
+        final Map<String, int> tagMap = {};
+        for (final s in stations) {
+          if (s.category.isNotEmpty) {
+            tagMap[s.category] = (tagMap[s.category] ?? 0) + 1;
+          }
+        }
+        final entries = tagMap.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        return entries
+            .map((e) => Tag(name: e.key, stationCount: e.value))
+            .toList();
+      }
     } catch (e) {
-      debugPrint('Failed to load tags: $e');
+      debugPrint('Failed to extract tags from local data: $e');
     }
     return [];
   }
 
   Future<List<Language>> loadLanguages() async {
     try {
-      final response = await _request('languages', queryParameters: {
-        'order': 'stationcount',
-        'reverse': 'true',
-        'hidebroken': 'true',
-      });
-
-      final List<dynamic> jsonData = response.data as List<dynamic>;
-      return jsonData
-          .map((json) => Language.fromJson(json as Map<String, dynamic>))
-          .where((lang) => lang.name.isNotEmpty && lang.stationCount > 0)
-          .toList();
+      final stations = await loadStations();
+      if (stations.isNotEmpty) {
+        final Map<String, int> langMap = {};
+        for (final s in stations) {
+          if (s.language.isNotEmpty) {
+            langMap[s.language] = (langMap[s.language] ?? 0) + 1;
+          }
+        }
+        final entries = langMap.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        return entries
+            .map((e) => Language(name: e.key, stationCount: e.value))
+            .toList();
+      }
     } catch (e) {
-      debugPrint('Failed to load languages: $e');
+      debugPrint('Failed to extract languages from local data: $e');
     }
     return [];
   }

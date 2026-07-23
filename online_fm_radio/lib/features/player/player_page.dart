@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
@@ -8,6 +7,7 @@ import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/theme/app_theme.dart';
 import 'package:online_fm_radio/shared/components/music_visualizer.dart';
+import 'package:online_fm_radio/shared/components/station_logo.dart';
 
 /// 播放页：全屏沉浸式设计
 ///
@@ -138,57 +138,23 @@ class _PlayerPageState extends State<PlayerPage> {
     return Consumer<PlayerService>(
       builder: (context, playerService, child) {
         final s = playerService.currentStation ?? widget.station;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 48),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 30,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: CachedNetworkImage(
-                imageUrl: s.logo,
-                width: double.infinity,
-                height: 260,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: double.infinity,
-                  height: 260,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(28)),
-                    gradient: AppTheme.primaryGradient,
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  width: double.infinity,
-                  height: 260,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(28)),
-                    gradient: AppTheme.primaryGradient,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.radio,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+        return Container(
+          width: 150,
+          height: 150,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 3,
               ),
-            ),
+            ],
+          ),
+          child: StationLogo(
+            station: s,
+            size: 150,
+            borderRadius: 24,
           ),
         );
       },
@@ -534,24 +500,10 @@ class _PlayerPageState extends State<PlayerPage> {
                                     .currentStation?.id ==
                                 station.id;
                             return ListTile(
-                              leading: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(8),
-                                child: CachedNetworkImage(
-                                  imageUrl: station.logo,
-                                  width: 44,
-                                  height: 44,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) =>
-                                      Container(
-                                    width: 44,
-                                    height: 44,
-                                    color: Colors.white10,
-                                    child: const Icon(Icons.radio,
-                                        size: 22,
-                                        color: Colors.white54),
-                                  ),
-                                ),
+                              leading: StationLogo(
+                                station: station,
+                                size: 44,
+                                borderRadius: 8,
                               ),
                               title: Text(
                                 station.name,

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/country_preference_service.dart';
@@ -10,6 +9,7 @@ import 'package:online_fm_radio/data/models/language.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
+import 'package:online_fm_radio/shared/components/station_logo.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -312,31 +312,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: station.logo,
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: 72,
-                  height: 72,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.radio,
-                    size: 28,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  width: 72,
-                  height: 72,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.radio,
-                    size: 28,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
+              child: StationLogo(
+                station: station,
+                size: 72,
+                borderRadius: 12,
               ),
             ),
             const SizedBox(height: 6),

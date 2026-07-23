@@ -76,7 +76,7 @@ class RadioAudioHandler extends BaseAudioHandler {
       title: station.name,
       artist: station.country,
       genre: station.category,
-      artUri: station.logo.isNotEmpty ? Uri.tryParse(station.logo) : null,
+      artUri: station.safeLogo.isNotEmpty ? Uri.tryParse(station.safeLogo) : null,
       displayDescription: station.description,
       duration: Duration.zero,
       extras: {

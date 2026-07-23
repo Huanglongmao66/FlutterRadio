@@ -58,6 +58,9 @@ class Station {
       category: json['category'] as String? ?? '',
       logo: json['logo'] as String? ?? '',
       description: json['description'] as String? ?? '',
+      votes: json['votes'] as int? ?? 0,
+      bitrate: json['bitrate'] as int? ?? 0,
+      codec: json['codec'] as String? ?? '',
     );
   }
 
@@ -72,7 +75,31 @@ class Station {
       'category': category,
       'logo': logo,
       'description': description,
+      'votes': votes,
+      'bitrate': bitrate,
+      'codec': codec,
     };
+  }
+
+  /// 将 HTTP logo URL 升级为 HTTPS，避免 Web 端混合内容限制。
+  String get safeLogo {
+    if (logo.isEmpty) return '';
+    if (logo.startsWith('https://')) return logo;
+    if (logo.startsWith('http://')) return 'https://${logo.substring(7)}';
+    return logo;
+  }
+
+  /// 基于 streamUrl / logo 域名生成的 Google Favicon 备用 URL。
+  /// 当原始 logo 加载失败时作为回退方案。
+  String get faviconFallback {
+    String? domain;
+    final src = streamUrl.isNotEmpty ? streamUrl : logo;
+    final uri = Uri.tryParse(src);
+    if (uri != null && uri.host.isNotEmpty) {
+      domain = uri.host;
+    }
+    if (domain == null || domain.isEmpty) return '';
+    return 'https://www.google.com/s2/favicons?domain=$domain&sz=128';
   }
 
   /// 根据 countryCode (ISO 3166-1 alpha-2) 生成国旗 emoji。

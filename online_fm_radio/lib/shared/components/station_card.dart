@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
+import 'package:online_fm_radio/shared/components/station_logo.dart';
 
 class StationCard extends StatelessWidget {
   final Station station;
@@ -44,32 +44,10 @@ class StationCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 缩略图
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: station.logo,
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 64,
-                    height: 64,
-                    color: Theme.of(context).colorScheme.surfaceVariant,
-                    child: const Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 64,
-                    height: 64,
-                    color: Theme.of(context).colorScheme.surfaceVariant,
-                    child: const Icon(Icons.radio, size: 28, color: Colors.grey),
-                  ),
-                ),
+              StationLogo(
+                station: station,
+                size: 64,
+                borderRadius: 10,
               ),
               const SizedBox(width: 12),
               // 中间信息区

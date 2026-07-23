@@ -17,7 +17,9 @@ class StationCacheService {
 
   Future<void> appendStations(List<Station> stations) async {
     final existing = await getCachedStations();
-    final allStations = [...existing, ...stations];
+    final existingIds = existing.map((s) => s.id).toSet();
+    final newStations = stations.where((s) => !existingIds.contains(s.id)).toList();
+    final allStations = [...existing, ...newStations];
     final prefs = await SharedPreferences.getInstance();
     final jsonList = allStations.map((s) => jsonEncode(s.toJson())).toList();
     await prefs.setStringList(_cacheKey, jsonList);

@@ -32,15 +32,15 @@ class _MusicVisualizerState extends State<MusicVisualizer>
   final Random _random = Random();
   final List<double> _barHeights = [];
   final List<_Particle> _particles = [];
-  static const int _barCount = 32;
-  static const int _particleCount = 40;
+  static const int _barCount = 16;
+  static const int _particleCount = 20;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 120),
+      duration: const Duration(milliseconds: 200),
     )..addListener(_updateAnimation);
 
     // 初始化柱状高度
@@ -68,12 +68,12 @@ class _MusicVisualizerState extends State<MusicVisualizer>
         // 播放中：柱状高度随机跳动
         for (int i = 0; i < _barCount; i++) {
           final target = 0.3 + _random.nextDouble() * 0.7;
-          _barHeights[i] += (target - _barHeights[i]) * 0.4;
+          _barHeights[i] += (target - _barHeights[i]) * 0.2;
         }
         // 粒子上浮
         for (final p in _particles) {
-          p.y -= p.speed * 0.01;
-          p.phase += 0.1;
+          p.y -= p.speed * 0.005;
+          p.phase += 0.05;
           if (p.y < -0.1) {
             p.y = 1.1;
             p.x = _random.nextDouble();

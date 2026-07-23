@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/models/tag.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
+import 'package:online_fm_radio/shared/components/station_logo.dart';
 
 /// 探索页：分三个板块展示电台内容。
 /// 1. 新电台：按最近活跃时间排序的最新电台，横向滑动。
@@ -181,31 +181,10 @@ class _ExplorePageState extends State<ExplorePage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: station.logo,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: 100,
-                  height: 100,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.radio,
-                    size: 36,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  width: 100,
-                  height: 100,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.radio,
-                    size: 36,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
+              child: StationLogo(
+                station: station,
+                size: 100,
+                borderRadius: 12,
               ),
             ),
             const SizedBox(height: 6),
