@@ -78,6 +78,17 @@ class PlayerService extends ChangeNotifier {
 
   /// 播放指定电台。
   Future<void> play(Station station) async {
+    // 校验流地址：必须非空且以 http 开头。
+    if (station.streamUrl.isEmpty ||
+        !(station.streamUrl.startsWith('http://') ||
+            station.streamUrl.startsWith('https://'))) {
+      _errorMessage = '无效的电台流地址';
+      _isPlaying = false;
+      _isBuffering = false;
+      notifyListeners();
+      return;
+    }
+
     _errorMessage = null;
     _retryCount = 0;
     _currentStation = station;
