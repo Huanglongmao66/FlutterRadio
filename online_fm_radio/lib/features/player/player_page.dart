@@ -5,12 +5,31 @@ import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/theme/app_theme.dart';
+import 'package:online_fm_radio/shared/components/music_visualizer.dart';
 
-class PlayerPage extends StatelessWidget {
+/// 播放页：全屏沉浸式设计
+///
+/// 布局结构（从上到下）：
+/// 1. 顶部栏：返回 + 电台名称 + 更多
+/// 2. 国旗 + 国家名
+/// 3. 电台大封面
+/// 4. 音乐动效（可切换柱状/线条/粒子）
+/// 5. 功能图标行：音量、闹钟、定时、录音、收藏
+/// 6. 播放控制组件
+/// 7. 上滑半屏最近播放列表（通过底部 handle 拉起）
+class PlayerPage extends StatefulWidget {
   final Station station;
 
   const PlayerPage({super.key, required this.station});
+
+  @override
+  State<PlayerPage> createState() => _PlayerPageState();
+}
+
+class _PlayerPageState extends State<PlayerPage> {
+  VisualizerStyle _visualizerStyle = VisualizerStyle.bars;
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +39,24 @@ class PlayerPage extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              _buildTopBar(context),
+              _buildTopBar(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      _buildBrandText(),
-                      _buildStationImage(context),
-                      _buildStationInfo(context),
-                      _buildBufferingIndicator(context),
-                      _buildErrorState(context),
-                      _buildPlaybackControls(context),
-                      _buildVolumeControl(context),
-                      _buildActionButtons(context),
+                      const SizedBox(height: 8),
+                      _buildCountryRow(),
+                      const SizedBox(height: 16),
+                      _buildStationImage(),
+                      const SizedBox(height: 12),
+                      _buildVisualizer(),
+                      const SizedBox(height: 20),
+                      _buildActionIcons(),
+                      const SizedBox(height: 24),
+                      _buildPlaybackControls(),
+                      const SizedBox(height: 20),
+                      _buildHistoryHandle(),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -44,221 +68,155 @@ class PlayerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  // ========== 顶部栏 ==========
+  Widget _buildTopBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, size: 28, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios, size: 22, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          const Spacer(),
-          Consumer<SleepTimerService>(
-            builder: (context, timerService, child) {
-              if (!timerService.isActive) return const SizedBox.shrink();
-              return Text(
-                _formatDuration(timerService.remaining!),
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              );
-            },
+          Expanded(
+            child: Consumer<PlayerService>(
+              builder: (context, playerService, child) {
+                final s = playerService.currentStation ?? widget.station;
+                return Text(
+                  s.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                );
+              },
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert, size: 24, color: Colors.white),
+            onPressed: () => _showMoreMenu(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBrandText() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Text(
-        'Fradoi',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Colors.white.withOpacity(0.6),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStationImage(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: CachedNetworkImage(
-          imageUrl: station.logo,
-          width: 280,
-          height: 280,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            width: 280,
-            height: 280,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            width: 280,
-            height: 280,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.radio,
-                size: 80,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStationInfo(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        children: [
-          Text(
-            station.name,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.location_on, size: 16, color: Colors.white70),
-              const SizedBox(width: 4),
-              Text(
-                station.country,
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.tag, size: 16, color: Colors.white70),
-              const SizedBox(width: 4),
-              Text(
-                station.category,
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-            ],
-          ),
-          if (station.description.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              station.description,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBufferingIndicator(BuildContext context) {
+  // ========== 国旗 + 国家 ==========
+  Widget _buildCountryRow() {
     return Consumer<PlayerService>(
       builder: (context, playerService, child) {
-        if (!playerService.isBuffering) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          child: Column(
-            children: [
-              const LinearProgressIndicator(
-                backgroundColor: Colors.white12,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        final s = playerService.currentStation ?? widget.station;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (s.flagEmoji.isNotEmpty) ...[
+              Text(
+                s.flagEmoji,
+                style: const TextStyle(fontSize: 20),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                '缓冲中...',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
+              const SizedBox(width: 8),
+            ],
+            Text(
+              s.country,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ========== 电台大封面 ==========
+  Widget _buildStationImage() {
+    return Consumer<PlayerService>(
+      builder: (context, playerService, child) {
+        final s = playerService.currentStation ?? widget.station;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: CachedNetworkImage(
+                imageUrl: s.logo,
+                width: double.infinity,
+                height: 260,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: double.infinity,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(28)),
+                    gradient: AppTheme.primaryGradient,
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: double.infinity,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(28)),
+                    gradient: AppTheme.primaryGradient,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.radio,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildErrorState(BuildContext context) {
+  // ========== 音乐动效（可切换样式） ==========
+  Widget _buildVisualizer() {
     return Consumer<PlayerService>(
       builder: (context, playerService, child) {
-        if (playerService.errorMessage == null) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.red.withOpacity(0.2),
-            ),
+        return GestureDetector(
+          onTap: _cycleVisualizerStyle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Colors.red,
+                MusicVisualizer(
+                  isPlaying: playerService.isPlaying,
+                  style: _visualizerStyle,
+                  color: Colors.white,
+                  height: 60,
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  '播放失败',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
-                  playerService.errorMessage!,
-                  style: const TextStyle(fontSize: 14, color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => playerService.play(station),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    backgroundColor: const Color(0xFF6366F1),
-                  ),
-                  child: const Text(
-                    '重试',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  _styleLabel(_visualizerStyle),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -269,214 +227,460 @@ class PlayerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaybackControls(BuildContext context) {
-    return Consumer<PlayerService>(
-      builder: (context, playerService, child) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.skip_previous, size: 40, color: Colors.white),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 32),
-              GestureDetector(
-                onTap: () {
-                  if (playerService.currentStation == station) {
-                    if (playerService.isPlaying) {
-                      playerService.pause();
-                    } else {
-                      playerService.resume();
-                    }
-                  } else {
-                    playerService.play(station);
-                  }
-                },
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppTheme.primaryGradient,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6366F1).withOpacity(0.4),
-                        blurRadius: 20,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    playerService.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 32),
-              IconButton(
-                icon: const Icon(Icons.skip_next, size: 40, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  String _styleLabel(VisualizerStyle style) {
+    switch (style) {
+      case VisualizerStyle.bars:
+        return '柱状 点击切换';
+      case VisualizerStyle.lines:
+        return '线条 点击切换';
+      case VisualizerStyle.particles:
+        return '粒子 点击切换';
+    }
   }
 
-  Widget _buildVolumeControl(BuildContext context) {
-    return Consumer<PlayerService>(
-      builder: (context, playerService, child) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 48),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.volume_mute,
-                    size: 20,
-                    color: Colors.white.withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Slider(
-                      value: playerService.volume,
-                      onChanged: (value) => playerService.setVolume(value),
-                      min: 0.0,
-                      max: 1.0,
-                      activeColor: Colors.white,
-                      inactiveColor: Colors.white.withOpacity(0.2),
-                      thumbColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.volume_up,
-                    size: 20,
-                    color: Colors.white.withOpacity(0.6),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${(playerService.volume * 100).round()}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.6),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  void _cycleVisualizerStyle() {
+    setState(() {
+      switch (_visualizerStyle) {
+        case VisualizerStyle.bars:
+          _visualizerStyle = VisualizerStyle.lines;
+          break;
+        case VisualizerStyle.lines:
+          _visualizerStyle = VisualizerStyle.particles;
+          break;
+        case VisualizerStyle.particles:
+          _visualizerStyle = VisualizerStyle.bars;
+          break;
+      }
+    });
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  // ========== 功能图标行 ==========
+  Widget _buildActionIcons() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Consumer<FavoritesService>(
+        builder: (context, favoritesService, child) {
+          final playerService =
+              Provider.of<PlayerService>(context, listen: false);
+          final s = playerService.currentStation ?? widget.station;
+          final isFav = favoritesService.isFavorite(s);
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildActionIcon(
+                icon: Icons.volume_up,
+                label: '音量',
+                onTap: () => _showVolumeDialog(context),
+              ),
+              _buildActionIcon(
+                icon: Icons.alarm,
+                label: '闹钟',
+                onTap: () => _showSnack('闹钟功能开发中'),
+              ),
+              _buildActionIcon(
+                icon: Icons.timer_outlined,
+                label: '定时',
+                onTap: () => _showSleepTimerDialog(context),
+              ),
+              _buildActionIcon(
+                icon: Icons.mic_none,
+                label: '录音',
+                onTap: () => _showSnack('录音功能开发中'),
+              ),
+              _buildActionIcon(
+                icon: isFav ? Icons.favorite : Icons.favorite_border,
+                label: '收藏',
+                color: isFav ? Colors.red : null,
+                onTap: () => favoritesService.toggleFavorite(s),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionIcon({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildActionButton(
-            context,
-            Icons.favorite,
-            '收藏',
-            () {
-              Provider.of<FavoritesService>(context, listen: false)
-                  .toggleFavorite(station);
-            },
-            isActive: Provider.of<FavoritesService>(context).isFavorite(station),
-            activeColor: Colors.red,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: Icon(
+              icon,
+              size: 24,
+              color: color ?? Colors.white,
+            ),
           ),
-          const SizedBox(width: 48),
-          _buildActionButton(
-            context,
-            Icons.timer,
-            '定时关闭',
-            () => _showSleepTimerDialog(context),
-            isActive: Provider.of<SleepTimerService>(context).isActive,
-          ),
-          const SizedBox(width: 48),
-          _buildActionButton(
-            context,
-            Icons.more_vert,
-            '更多',
-            () {},
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white.withOpacity(0.7),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onPressed, {
-    bool isActive = false,
-    Color? activeColor,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive
-                ? (activeColor ?? const Color(0xFF6366F1)).withOpacity(0.2)
-                : Colors.white.withOpacity(0.1),
+  // ========== 播放控制 ==========
+  Widget _buildPlaybackControls() {
+    return Consumer<PlayerService>(
+      builder: (context, playerService, child) {
+        final s = playerService.currentStation ?? widget.station;
+        final isCurrent = playerService.currentStation?.id == s.id;
+        final isPlaying = isCurrent && playerService.isPlaying;
+        final isBuffering = isCurrent && playerService.isBuffering;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 上一首
+              IconButton(
+                icon: const Icon(Icons.skip_previous,
+                    size: 36, color: Colors.white70),
+                onPressed: () => _playPrevious(),
+              ),
+              const SizedBox(width: 28),
+              // 播放/暂停大按钮
+              GestureDetector(
+                onTap: isBuffering
+                    ? null
+                    : () {
+                        if (isCurrent) {
+                          if (isPlaying) {
+                            playerService.pause();
+                          } else {
+                            playerService.resume();
+                          }
+                        } else {
+                          playerService.play(s);
+                        }
+                      },
+                child: Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppTheme.primaryGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            const Color(0xFF6366F1).withOpacity(0.4),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: isBuffering
+                      ? const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          isPlaying
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                          size: 48,
+                          color: Colors.white,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 28),
+              // 下一首
+              IconButton(
+                icon: const Icon(Icons.skip_next,
+                    size: 36, color: Colors.white70),
+                onPressed: () => _playNext(),
+              ),
+            ],
           ),
-          child: IconButton(
-            icon: Icon(
-              icon,
-              size: 28,
-              color: isActive
-                  ? (activeColor ?? const Color(0xFF6366F1))
-                  : Colors.white,
-            ),
-            onPressed: onPressed,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
+  // ========== 上滑提示 handle ==========
+  Widget _buildHistoryHandle() {
+    return GestureDetector(
+      onVerticalDragUpdate: (details) {
+        if (details.delta.dy < -3) {
+          _showHistoryBottomSheet();
+        }
+      },
+      onTap: _showHistoryBottomSheet,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '上滑查看最近播放',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ========== 最近播放底部弹窗 ==========
+  void _showHistoryBottomSheet() {
+    final historyService =
+        Provider.of<HistoryService>(context, listen: false);
+    final playerService =
+        Provider.of<PlayerService>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // 顶部 handle
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 8),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      '最近播放',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const Divider(color: Colors.white12, height: 1),
+                  Expanded(
+                    child: Consumer<HistoryService>(
+                      builder: (context, service, child) {
+                      final history = service.history;
+                      if (history.isEmpty) {
+                        return Center(
+                          child: Text(
+                            '暂无播放记录',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 14,
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        controller: scrollController,
+                        itemCount: history.length,
+                        itemBuilder: (context, index) {
+                          final station = history[index];
+                          final isPlaying = playerService
+                                  .currentStation?.id ==
+                              station.id;
+                          return ListTile(
+                            leading: ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: station.logo,
+                                width: 44,
+                                height: 44,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    Container(
+                                  width: 44,
+                                  height: 44,
+                                  color: Colors.white10,
+                                  child: const Icon(Icons.radio,
+                                      size: 22,
+                                      color: Colors.white54),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              station.name,
+                              style: TextStyle(
+                                color: isPlaying
+                                    ? const Color(0xFF6366F1)
+                                    : Colors.white,
+                                fontWeight: isPlaying
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              station.country,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12,
+                              ),
+                            ),
+                            trailing: isPlaying
+                                ? const Icon(
+                                    Icons.play_arrow,
+                                    color: Color(0xFF6366F1),
+                                  )
+                                : null,
+                            onTap: () {
+                              playerService.play(station);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ========== 音量弹窗 ==========
+  void _showVolumeDialog(BuildContext context) {
+    final playerService =
+        Provider.of<PlayerService>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              title: const Text('音量',
+                  style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Consumer<PlayerService>(
+                    builder: (context, ps, child) {
+                      return Row(
+                        children: [
+                          const Icon(Icons.volume_mute,
+                              color: Colors.white70),
+                          Expanded(
+                            child: Slider(
+                              value: ps.volume,
+                              onChanged: (v) {
+                                ps.setVolume(v);
+                              },
+                              activeColor: const Color(0xFF6366F1),
+                              inactiveColor: Colors.white12,
+                            ),
+                          ),
+                          const Icon(Icons.volume_up,
+                              color: Colors.white70),
+                        ],
+                      );
+                    },
+                  ),
+                  Text(
+                    '${(playerService.volume * 100).round()}%',
+                    style: const TextStyle(
+                        color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('确定',
+                      style: TextStyle(color: Color(0xFF6366F1))),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ========== 定时关闭弹窗 ==========
   void _showSleepTimerDialog(BuildContext context) {
-    final timerService = Provider.of<SleepTimerService>(context, listen: false);
+    final timerService =
+        Provider.of<SleepTimerService>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A2E),
-          title: const Text('定时关闭', style: TextStyle(color: Colors.white)),
+          title: const Text('定时关闭',
+              style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (timerService.isActive) ...[
                 Text(
                   '剩余时间: ${_formatDuration(timerService.remaining!)}',
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                  style: const TextStyle(
+                      fontSize: 16, color: Colors.white),
                 ),
                 const SizedBox(height: 16),
               ],
-              const Text('选择关闭时间:', style: TextStyle(color: Colors.white70)),
+              const Text('选择关闭时间:',
+                  style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -494,7 +698,8 @@ class PlayerPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('取消', style: TextStyle(color: Colors.white70)),
+              child: const Text('取消',
+                  style: TextStyle(color: Colors.white70)),
             ),
             if (timerService.isActive)
               TextButton(
@@ -502,7 +707,8 @@ class PlayerPage extends StatelessWidget {
                   timerService.cancel();
                   Navigator.pop(context);
                 },
-                child: const Text('关闭定时', style: TextStyle(color: Colors.red)),
+                child: const Text('关闭定时',
+                    style: TextStyle(color: Colors.red)),
               ),
           ],
         );
@@ -510,7 +716,8 @@ class PlayerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTimerOption(BuildContext context, int minutes, String label) {
+  Widget _buildTimerOption(
+      BuildContext context, int minutes, String label) {
     return ElevatedButton(
       onPressed: () {
         Provider.of<SleepTimerService>(context, listen: false)
@@ -528,11 +735,171 @@ class PlayerPage extends StatelessWidget {
     );
   }
 
+  // ========== 更多菜单 ==========
+  void _showMoreMenu(BuildContext context) {
+    final playerService =
+        Provider.of<PlayerService>(context, listen: false);
+    final s = playerService.currentStation ?? widget.station;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading:
+                    const Icon(Icons.share, color: Colors.white70),
+                title: const Text('分享电台',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showSnack('分享功能开发中');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline,
+                    color: Colors.white70),
+                title: const Text('电台信息',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showStationInfo(s);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_problem_outlined,
+                    color: Colors.white70),
+                title: const Text('举报电台',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showSnack('举报功能开发中');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showStationInfo(Station s) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: Text(s.name,
+            style: const TextStyle(color: Colors.white)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _infoRow('国家', s.country),
+              _infoRow('语言', s.language.isEmpty ? '-' : s.language),
+              _infoRow('分类', s.category),
+              _infoRow('码率', '${s.bitrate} kbps'),
+              _infoRow('编码', s.codec.isEmpty ? '-' : s.codec),
+              _infoRow('投票', '${s.votes}'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭',
+                style: TextStyle(color: Color(0xFF6366F1))),
+          ),
+        ],
+      );
+    },
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _playPrevious() {
+    final historyService =
+        Provider.of<HistoryService>(context, listen: false);
+    final playerService =
+        Provider.of<PlayerService>(context, listen: false);
+    final history = historyService.history;
+    if (history.isEmpty) return;
+    final currentId = playerService.currentStation?.id;
+    final currentIndex =
+        history.indexWhere((s) => s.id == currentId);
+    if (currentIndex < 0 || currentIndex >= history.length - 1) {
+      if (history.isNotEmpty) playerService.play(history.first);
+    } else {
+      playerService.play(history[currentIndex + 1]);
+    }
+  }
+
+  void _playNext() {
+    final historyService =
+        Provider.of<HistoryService>(context, listen: false);
+    final playerService =
+        Provider.of<PlayerService>(context, listen: false);
+    final history = historyService.history;
+    if (history.isEmpty) return;
+    final currentId = playerService.currentStation?.id;
+    final currentIndex =
+        history.indexWhere((s) => s.id == currentId);
+    if (currentIndex <= 0) {
+      if (history.isNotEmpty) playerService.play(history.last);
+    } else {
+      playerService.play(history[currentIndex - 1]);
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   String _formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final seconds = duration.inSeconds.remainder(60);
-
     if (hours > 0) {
       return '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
