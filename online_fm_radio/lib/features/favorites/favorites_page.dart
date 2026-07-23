@@ -4,9 +4,12 @@ import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
-import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 
+/// 收藏页：包含「收藏列表」与「最近播放」两个 Tab。
+/// - 收藏列表：直接使用 FavoritesService 中保存的完整 Station 对象，
+///   因此即使未在播放记录中也能正常播放（修复历史收藏无法播放的 bug）。
+/// - 最近播放：来自 HistoryService（播放时自动写入）。
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
 
@@ -14,7 +17,8 @@ class FavoritesPage extends StatefulWidget {
   State<FavoritesPage> createState() => _FavoritesPageState();
 }
 
-class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProviderStateMixin {
+class _FavoritesPageState extends State<FavoritesPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -57,12 +61,14 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
     );
   }
 
+  /// 收藏列表：直接消费 FavoritesService.favorites（完整 Station 列表）。
   Widget _buildFavoritesList(BuildContext context) {
     return Consumer<FavoritesService>(
       builder: (context, favoritesService, child) {
-        final favoriteIds = favoritesService.favoriteIds;
-        
-        if (favoriteIds.isEmpty) {
+        // 使用完整 Station 列表，确保 streamUrl 等播放信息完整可用。
+        final favorites = favoritesService.favorites;
+
+        if (favorites.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -77,42 +83,24 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: favoriteIds.length,
+          itemCount: favorites.length,
           itemBuilder: (context, index) {
-            final stationId = favoriteIds[index];
-            return _buildFavoriteStationCard(context, stationId);
+            final station = favorites[index];
+            return StationCard(
+              station: station,
+              onTap: () => Navigator.pushNamed(
+                context,
+                '/player',
+                arguments: station,
+              ),
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildFavoriteStationCard(BuildContext context, String stationId) {
-    final historyService = Provider.of<HistoryService>(context, listen: false);
-
-    final station = historyService.history.firstWhere(
-      (s) => s.id == stationId,
-      orElse: () => Station(
-        id: stationId,
-        name: '未知电台',
-        streamUrl: '',
-        logo: '',
-        country: '',
-        category: '',
-        description: '',
-      ),
-    );
-
-    return StationCard(
-      station: station,
-      onTap: () => Navigator.pushNamed(
-        context,
-        '/player',
-        arguments: station,
-      ),
-    );
-  }
-
+  /// 最近播放列表：消费 HistoryService.history。
   Widget _buildHistoryList(BuildContext context) {
     return Consumer<HistoryService>(
       builder: (context, historyService, child) {

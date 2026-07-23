@@ -129,14 +129,19 @@ class _CountryListPageState extends State<CountryListPage> {
       itemCount: _filteredCountries.length,
       itemBuilder: (context, index) {
         final country = _filteredCountries[index];
+        // 国旗 emoji：由 ISO 国家码转换，无码时回退到文字占位。
+        final flag = country.flagEmoji;
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             child: Text(
-              country.countryCode.isNotEmpty
-                  ? country.countryCode.substring(0, 2).toUpperCase()
-                  : '?',
+              flag.isNotEmpty
+                  ? flag
+                  : (country.countryCode.isNotEmpty
+                      ? country.countryCode.substring(0, 2).toUpperCase()
+                      : '?'),
               style: TextStyle(
+                fontSize: 22,
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
               ),

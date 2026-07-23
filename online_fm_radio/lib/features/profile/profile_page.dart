@@ -265,11 +265,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildFavoritesList(BuildContext context) {
     return Consumer<FavoritesService>(
       builder: (context, favoritesService, child) {
-        final historyService = Provider.of<HistoryService>(context, listen: false);
-        final favoriteIds = favoritesService.favoriteIds;
-        final favoriteStations = historyService.history
-            .where((station) => favoriteIds.contains(station.id))
-            .toList();
+        // 直接使用 FavoritesService 中保存的完整 Station 列表，
+        // 不再依赖播放历史查找，确保收藏电台可正常播放。
+        final favoriteStations = favoritesService.favorites;
 
         if (favoriteStations.isEmpty) {
           return const Padding(

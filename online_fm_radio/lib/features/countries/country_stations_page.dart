@@ -32,7 +32,7 @@ class _CountryStationsPageState extends State<CountryStationsPage> {
     });
 
     try {
-      // 先从缓存中查找该国家的电台
+      // 第一步：先从全量缓存中按国家名查找该国家的电台。
       final allStations = await _repository.loadStations();
       final cached = allStations
           .where((s) => s.country == widget.country.name)
@@ -41,8 +41,13 @@ class _CountryStationsPageState extends State<CountryStationsPage> {
       if (cached.isNotEmpty) {
         _stations = cached;
       } else {
-        // 缓存中没有，从 API 获取
-        _stations = await _repository.loadByCountry(widget.country.countryCode);
+        // 第二步：缓存中没有，优先按国家名从 API 精确拉取（更可靠）。
+        _stations = await _repository.loadByCountryName(widget.country.name);
+
+        // 第三步：按国家名仍无结果且有国家码时，回退到按国家码拉取。
+        if (_stations.isEmpty && widget.country.countryCode.isNotEmpty) {
+          _stations = await _repository.loadByCountry(widget.country.countryCode);
+        }
       }
     } catch (e) {
       _errorMessage = e.toString();
