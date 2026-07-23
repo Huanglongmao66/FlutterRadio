@@ -202,12 +202,34 @@ class _ProfilePageState extends State<ProfilePage> {
                     TextButton.icon(
                       onPressed: () => _startUpdate(context, updateService),
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('更新电台列表'),
+                      label: Text(updateService.hasResumeData ? '继续更新' : '更新电台列表'),
                     ),
                 ],
               ),
               const SizedBox(height: 12),
               _buildStatsGrid(),
+              if (updateService.hasResumeData && !updateService.isUpdating) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '上次更新未完成（${updateService.fetchedCount}/${updateService.totalCount}），点击继续更新',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (updateService.isUpdating) ...[
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
@@ -266,10 +288,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_stats == null) return const SizedBox.shrink();
 
     final items = [
-      _StatItem(Icons.radio, '本地电台', '${_stats!.stations}'),
-      _StatItem(Icons.public, '国家', '${_stats!.countries}'),
-      _StatItem(Icons.language, '语言', '${_stats!.languages}'),
-      _StatItem(Icons.label, '标签', '${_stats!.tags}'),
+      _StatItem(Icons.radio, '本地电台', '${_stats!.stations}', '/local_stations'),
+      _StatItem(Icons.public, '国家', '${_stats!.countries}', '/countries'),
+      _StatItem(Icons.language, '语言', '${_stats!.languages}', '/languages'),
+      _StatItem(Icons.label, '标签', '${_stats!.tags}', '/tags'),
     ];
 
     return GridView.builder(
@@ -284,33 +306,37 @@ class _ProfilePageState extends State<ProfilePage> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item.icon, size: 20, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 4),
-              Text(
-                item.value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+        return InkWell(
+          onTap: () => Navigator.pushNamed(context, item.route),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(item.icon, size: 20, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 4),
+                Text(
+                  item.value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[600],
+                const SizedBox(height: 2),
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -324,7 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
     service.updateAllStations();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('正在后台更新电台列表...'),
+        content: Text('正在后台更新电台列表，屏幕将保持常亮...'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -543,6 +569,7 @@ class _StatItem {
   final IconData icon;
   final String label;
   final String value;
+  final String route;
 
-  _StatItem(this.icon, this.label, this.value);
+  _StatItem(this.icon, this.label, this.value, this.route);
 }

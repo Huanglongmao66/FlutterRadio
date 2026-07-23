@@ -101,13 +101,29 @@ class LocalStationDatasource {
   /// 全量获取电台数据并缓存
   ///
   /// [onProgress] - 进度回调，参数为 (已获取数量, 总数量)
+  /// [resumeOffset] - 断点续传起始偏移量，0 表示从头开始
+  /// [resumeFetched] - 断点续传已获取数量，用于累计计数
+  /// [onBatchSaved] - 每批次保存后的回调，参数为 (当前 offset, 已获取数量, 总数量)
   ///
   /// 用于首次启动或数据更新时，批量从 API 拉取大量电台数据并缓存。
   /// 每次请求 [_batchSize] 条，直到获取完所有数据或达到 stats API 返回的电台总数上限。
-  Future<int> fetchAllAndCache({void Function(int fetched, int total)? onProgress}) async {
+  /// 支持断点续传：如果上次更新中断，下次从保存的 offset 继续。
+  Future<int> fetchAllAndCache({
+    void Function(int fetched, int total)? onProgress,
+    int resumeOffset = 0,
+    int resumeFetched = 0,
+    void Function(int offset, int fetched, int total)? onBatchSaved,
+  }) async {
     final totalStations = await _getMaxStations();
     final allStations = <Station>[];
-    int offset = 0;
+    int offset = resumeOffset;
+    int fetchedCount = resumeFetched;
+
+    // 如果是断点续传，先加载已缓存的数据（用于后续合并覆盖）
+    if (resumeOffset > 0) {
+      final existing = await _cacheService.getCachedStations();
+      allStations.addAll(existing);
+    }
 
     while (offset < totalStations) {
       try {
@@ -126,21 +142,34 @@ class LocalStationDatasource {
             .where((station) => station.streamUrl.isNotEmpty)
             .toList();
 
-        allStations.addAll(batch);
-        onProgress?.call(allStations.length, totalStations);
+        // 断点续传时追加到已有数据，否则直接添加
+        if (resumeOffset > 0) {
+          allStations.addAll(batch);
+        } else {
+          allStations.addAll(batch);
+        }
+        fetchedCount += batch.length;
+        onProgress?.call(fetchedCount, totalStations);
+
+        // 每批次保存断点位置
+        offset += _batchSize;
+        onBatchSaved?.call(offset, fetchedCount, totalStations);
 
         if (jsonData.length < _batchSize) break;
-        offset += _batchSize;
       } catch (e) {
         debugPrint('Failed to fetch batch at offset $offset: $e');
-        break;
+        // 保存已获取的数据后再抛出异常
+        if (allStations.isNotEmpty) {
+          await _cacheService.cacheStations(allStations, 1);
+        }
+        rethrow;
       }
     }
 
     if (allStations.isNotEmpty) {
       await _cacheService.cacheStations(allStations, 1);
     }
-    return allStations.length;
+    return fetchedCount;
   }
 
   /// 获取电台总数

@@ -36,8 +36,21 @@ class StationRepository {
   /// 全量获取电台数据并缓存
   ///
   /// [onProgress] - 进度回调，参数为 (已获取数量, 总数量)
-  Future<int> fetchAllAndCache({void Function(int fetched, int total)? onProgress}) async {
-    return await _datasource.fetchAllAndCache(onProgress: onProgress);
+  /// [resumeOffset] - 断点续传起始偏移量
+  /// [resumeFetched] - 断点续传已获取数量
+  /// [onBatchSaved] - 每批次保存后的回调
+  Future<int> fetchAllAndCache({
+    void Function(int fetched, int total)? onProgress,
+    int resumeOffset = 0,
+    int resumeFetched = 0,
+    void Function(int offset, int fetched, int total)? onBatchSaved,
+  }) async {
+    return await _datasource.fetchAllAndCache(
+      onProgress: onProgress,
+      resumeOffset: resumeOffset,
+      resumeFetched: resumeFetched,
+      onBatchSaved: onBatchSaved,
+    );
   }
 
   /// 根据国家代码加载电台

@@ -22,7 +22,9 @@ import 'package:online_fm_radio/data/models/language.dart';
 import 'package:online_fm_radio/data/models/tag.dart';
 import 'package:online_fm_radio/features/countries/country_list_page.dart';
 import 'package:online_fm_radio/features/countries/country_stations_page.dart';
+import 'package:online_fm_radio/features/languages/language_list_page.dart';
 import 'package:online_fm_radio/features/languages/language_stations_page.dart';
+import 'package:online_fm_radio/features/stations/local_stations_page.dart';
 import 'package:online_fm_radio/features/tags/tag_list_page.dart';
 import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 
@@ -108,15 +110,17 @@ class MyApp extends StatelessWidget {
             final country = ModalRoute.of(context)?.settings.arguments as Country;
             return CountryStationsPage(country: country!);
           },
+          '/languages': (context) => const LanguageListPage(),
+          '/language_stations': (context) {
+            final language = ModalRoute.of(context)?.settings.arguments as Language;
+            return LanguageStationsPage(language: language!);
+          },
           '/tags': (context) => const TagListPage(),
           '/tag_stations': (context) {
             final tag = ModalRoute.of(context)?.settings.arguments as Tag;
             return TagStationsPage(tag: tag!);
           },
-          '/language_stations': (context) {
-            final language = ModalRoute.of(context)?.settings.arguments as Language;
-            return LanguageStationsPage(language: language!);
-          },
+          '/local_stations': (context) => const LocalStationsPage(),
         },
       ),
     );
