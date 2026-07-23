@@ -5,7 +5,9 @@ import 'package:just_audio/just_audio.dart';
 import 'package:online_fm_radio/core/services/audio_handler.dart';
 import 'package:online_fm_radio/core/services/audio_player_singleton.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/utils/battery_optimization_utils.dart';
 import 'package:online_fm_radio/data/models/station.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// 播放器业务服务。
 ///
@@ -29,6 +31,7 @@ class PlayerService extends ChangeNotifier {
   int _retryCount = 0;
   double _volume = 0.5;
   static const int _maxRetryCount = 3;
+  static const String _permissionShownKey = 'permission_shown';
 
   Station? get currentStation => _currentStation;
   bool get isPlaying => _isPlaying;
@@ -80,14 +83,36 @@ class PlayerService extends ChangeNotifier {
 
     _historyService?.addToHistory(station);
 
+    // 首次播放时请求后台保活权限
+    _checkBackgroundPermission();
+
+    // 先更新媒体信息，再通过 audioHandler 启动前台服务
     _audioHandler?.setStationMediaItem(station);
 
     try {
       await _player.setUrl(station.streamUrl);
-      await _player.play();
+      // 通过 audioHandler.play() 而非 _player.play()，
+      // 确保 audio_service 前台服务通知正确显示，MIUI 不会杀掉进程
+      if (_audioHandler != null) {
+        await _audioHandler.play();
+      } else {
+        await _player.play();
+      }
     } catch (e) {
       _handlePlaybackError(e.toString());
     }
+  }
+
+  /// 检查后台保活权限，首次播放时引导用户开启
+  void _checkBackgroundPermission() {
+    Future(() async {
+      final prefs = await SharedPreferences.getInstance();
+      final shown = prefs.getBool(_permissionShownKey) ?? false;
+      if (!shown) {
+        await prefs.setBool(_permissionShownKey, true);
+        await BatteryOptimizationUtils.checkAndRequestAllPermissions();
+      }
+    });
   }
 
   /// 使用播放队列播放，支持线控/蓝牙切台
@@ -107,7 +132,11 @@ class PlayerService extends ChangeNotifier {
 
     try {
       await _player.setUrl(station.streamUrl);
-      await _player.play();
+      if (_audioHandler != null) {
+        await _audioHandler.play();
+      } else {
+        await _player.play();
+      }
     } catch (e) {
       _handlePlaybackError(e.toString());
     }
@@ -122,7 +151,11 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> resume() async {
     if (_isPlaying || _currentStation == null) return;
-    await _player.play();
+    if (_audioHandler != null) {
+      await _audioHandler.play();
+    } else {
+      await _player.play();
+    }
     _isPlaying = true;
     notifyListeners();
   }

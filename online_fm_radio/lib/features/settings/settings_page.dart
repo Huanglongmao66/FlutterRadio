@@ -6,6 +6,7 @@ import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/import_export_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/core/services/visualizer_settings_service.dart';
+import 'package:online_fm_radio/core/utils/battery_optimization_utils.dart';
 import 'package:online_fm_radio/data/models/country.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
@@ -34,6 +35,7 @@ class SettingsPage extends StatelessWidget {
           _buildThemeSection(context),
           _buildVisualizerSection(context),
           _buildSleepTimerSection(context),
+          _buildBackgroundKeepAliveSection(context),
           _buildDataManagementSection(context),
           _buildAboutSection(context),
         ],
@@ -416,6 +418,50 @@ class SettingsPage extends StatelessWidget {
                   ],
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建后台保活设置区域
+  Widget _buildBackgroundKeepAliveSection(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.shield, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                const Text('后台保活', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '确保应用切到后台后电台正常播放。部分手机（如小米、华为）需要在系统设置中额外开启自启动。',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.notifications_active),
+              title: const Text('通知权限'),
+              subtitle: const Text('显示播放控制通知栏'),
+              trailing: const Icon(Icons.chevron_right),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => BatteryOptimizationUtils.requestNotificationPermission(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.battery_saver),
+              title: const Text('关闭电池优化'),
+              subtitle: const Text('防止后台断开网络'),
+              trailing: const Icon(Icons.chevron_right),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => BatteryOptimizationUtils.requestIgnoreBatteryOptimizations(),
             ),
           ],
         ),
