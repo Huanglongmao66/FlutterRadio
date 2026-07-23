@@ -155,8 +155,7 @@ class PlayerService extends ChangeNotifier {
   Stream<Duration?> get positionStream => AudioService.positionStream;
 
   /// 获取播放时长流。
-  Stream<Duration?> get durationStream => AudioService.mediaItemStream
-      .map((item) => item?.duration);
+  Stream<Duration?> get durationStream => Stream.value(null);
 
   /// 设置音量。
   void setVolume(double volume) {
