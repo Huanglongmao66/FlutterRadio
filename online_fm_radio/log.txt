@@ -78,9 +78,9 @@ Upgrading gradle.properties
 45
 Upgrading gradle.properties
 46
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-47
 Running Gradle task 'assembleRelease'...                        
+47
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
 48
 Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 49
@@ -138,7 +138,7 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 75
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 6484 bytes (99.6% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
 76
-/home/runner/.pub-cache/hosted/pub.dev/file_picker-6.2.1/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:122: error: cannot find symbol
+/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
 77
     public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
 78
@@ -148,7 +148,7 @@ Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184
 80
   location: interface PluginRegistry
 81
-/home/runner/.pub-cache/hosted/pub.dev/file_picker-6.2.1/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:251: error: cannot find symbol
+/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
 82
             final PluginRegistry.Registrar registrar,
 83
@@ -172,7 +172,7 @@ Execution failed for task ':file_picker:compileReleaseJavaWithJavac'.
 92
 > Compilation failed; see the compiler output below.
 93
-  /home/runner/.pub-cache/hosted/pub.dev/file_picker-6.2.1/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:122: error: cannot find symbol
+  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
 94
       public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
 95
@@ -182,7 +182,7 @@ Execution failed for task ':file_picker:compileReleaseJavaWithJavac'.
 97
     location: interface PluginRegistry
 98
-  /home/runner/.pub-cache/hosted/pub.dev/file_picker-6.2.1/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:251: error: cannot find symbol
+  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
 99
               final PluginRegistry.Registrar registrar,
 100
@@ -204,9 +204,9 @@ Execution failed for task ':file_picker:compileReleaseJavaWithJavac'.
 108
 
 109
-BUILD FAILED in 3m 55s
+BUILD FAILED in 3m 35s
 110
-Running Gradle task 'assembleRelease'...                          237.3s
+Running Gradle task 'assembleRelease'...                          217.4s
 111
 
 112
