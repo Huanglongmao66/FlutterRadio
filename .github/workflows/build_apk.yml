@@ -24,6 +24,9 @@ jobs:
       - name: Generate app icons
         run: cd online_fm_radio && flutter pub run flutter_launcher_icons
 
+      - name: Clean Gradle cache
+        run: cd online_fm_radio && rm -rf ~/.gradle/caches && ./android/gradlew --no-daemon --stop || true
+
       - name: Build APK
         run: cd online_fm_radio && flutter build apk --release
 
