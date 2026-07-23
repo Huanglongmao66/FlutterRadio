@@ -52,12 +52,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // 在首帧渲染完成后才能拿到 Provider，此时绑定监听并加载数据。
+    _loadData();
+    // 在首帧渲染完成后才能拿到 Provider，此时绑定监听并应用持久化的国家偏好。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _countryService = context.read<CountryPreferenceService>();
       _countryService!.addListener(_onCountryPreferenceChanged);
-      // 先加载数据，加载完成后根据国家偏好筛选。
-      _loadData();
+      // 应用已持久化的国家偏好（设置页选过的国家会立即生效）。
+      _applyCountryFilter(_countryService!.selectedCountry);
     });
   }
 
@@ -72,19 +73,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     setState(() => _isLoading = true);
     try {
       await Future.wait([
+        _loadRecommendedStations(),
         _loadCountries(),
         _loadLanguages(),
       ]);
-      // 先加载全量电台缓存。
-      _allStations = await _repository.loadStations();
     } catch (e) {
       debugPrint('Failed to load data: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        // 数据加载完成后应用国家筛选（此时 _countryService 已初始化）。
-        _applyCountryFilter(_countryService?.selectedCountry);
-      }
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// 加载全量电台缓存，随后应用当前国家筛选。
+  Future<void> _loadRecommendedStations() async {
+    try {
+      _allStations = await _repository.loadStations();
+      await _applyCountryFilter(_countryService?.selectedCountry);
+    } catch (e) {
+      debugPrint('Failed to load recommended stations: $e');
     }
   }
 
@@ -93,7 +99,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   /// - country 非空：调用 API 按国家名精确拉取该国家电台（最多 50 条），
   ///   若 API 返回为空则回退到本地缓存中同国家电台，保证不会一直空白。
   Future<void> _applyCountryFilter(String? country) async {
-    if (!mounted) return;
     setState(() {
       _selectedCountry = country;
       _isLoadingRecommended = true;
