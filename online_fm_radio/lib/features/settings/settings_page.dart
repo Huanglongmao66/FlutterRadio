@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/services/import_export_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/data/models/country.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
@@ -347,6 +348,30 @@ class SettingsPage extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.upload_file),
+              title: const Text('导入电台列表'),
+              subtitle: const Text('支持 m3u、m3u8、json 格式'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => _importStations(context),
+            ),
+            const Divider(),
+            Consumer<FavoritesService>(
+              builder: (context, favoritesService, child) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.download),
+                  title: const Text('导出收藏电台'),
+                  subtitle: Text('共 ${favoritesService.favoriteIds.length} 个收藏'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: favoritesService.favoriteIds.isEmpty
+                      ? null
+                      : () => _exportStations(context, favoritesService.favorites),
+                );
+              },
+            ),
+            const Divider(),
             Consumer<FavoritesService>(
               builder: (context, favoritesService, child) {
                 return ListTile(
@@ -524,5 +549,88 @@ class SettingsPage extends StatelessWidget {
       return '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _importStations(BuildContext context) async {
+    final service = ImportExportService();
+    try {
+      final stations = await service.importFromFile();
+      if (stations.isEmpty) {
+        return;
+      }
+
+      final favoritesService = Provider.of<FavoritesService>(context, listen: false);
+      int importedCount = 0;
+      for (final station in stations) {
+        if (!favoritesService.isFavorite(station)) {
+          await favoritesService.toggleFavorite(station);
+          importedCount++;
+        }
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('成功导入 $importedCount 个电台')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('导入失败: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportStations(BuildContext context, List<dynamic> stations) async {
+    final service = ImportExportService();
+    final stationList = stations.whereType<Station>().toList();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择导出格式'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'm3u'),
+              child: Text('M3U 格式'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'm3u8'),
+              child: Text('M3U8 格式'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'json'),
+              child: Text('JSON 格式'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      try {
+        await service.exportToFile(stationList, result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('导出成功')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('导出失败: $e')),
+          );
+        }
+      }
+    }
   }
 }
