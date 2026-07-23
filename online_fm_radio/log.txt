@@ -1,77 +1,235 @@
 Run cd online_fm_radio && flutter build apk --release
 7
-Upgrading build.gradle
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
 8
-Upgrading gradle.properties
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
 9
-Upgrading gradle.properties
+
 10
-Running Gradle task 'assembleRelease'...                        
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
 11
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
 12
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
 13
-
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 14
-Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 15
-If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+
 16
-
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
 17
-Warning: Flutter support for your project's Kotlin version (2.0.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
 18
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
 19
-
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
 20
-Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
 21
-If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
-22
 
+22
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 23
-lib/core/services/audio_handler.dart:123:17: Error: Superclass has no method named 'dispose'.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 24
-    await super.dispose();
+
 25
-                ^^^^^^^
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
 26
-Target kernel_snapshot_program failed: Exception
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
 27
 
 28
-
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
 29
-FAILURE: Build failed with an exception.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
 30
 
 31
-* What went wrong:
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 32
-Execution failed for task ':app:compileFlutterBuildRelease'.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 33
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+
 34
-
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
 35
-* Try:
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
 36
-> Run with --stacktrace option to get the stack trace.
-37
-> Run with --info or --debug option to get more log output.
-38
-> Run with --scan to get full insights.
-39
-> Get more help at https://help.gradle.org.
-40
 
+37
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+38
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+39
+
+40
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 41
-BUILD FAILED in 2m 43s
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 42
-Running Gradle task 'assembleRelease'...                          164.1s
+
 43
-Gradle task assembleRelease failed with exit code 1
+Upgrading build.gradle
 44
+Upgrading gradle.properties
+45
+Upgrading gradle.properties
+46
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+47
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+48
+Running Gradle task 'assembleRelease'...                        
+49
+
+50
+Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
+51
+If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+52
+
+53
+Warning: Flutter support for your project's Kotlin version (2.0.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
+54
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+55
+
+56
+Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
+57
+If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
+58
+
+59
+Checking the license for package Android SDK Platform 33 in /usr/local/lib/android/sdk/licenses
+60
+License for package Android SDK Platform 33 accepted.
+61
+Preparing "Install Android SDK Platform 33 (revision 3)".
+62
+"Install Android SDK Platform 33 (revision 3)" ready.
+63
+Installing Android SDK Platform 33 in /usr/local/lib/android/sdk/platforms/android-33
+64
+"Install Android SDK Platform 33 (revision 3)" complete.
+65
+"Install Android SDK Platform 33 (revision 3)" finished.
+66
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
+67
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
+68
+
+69
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+70
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+71
+
+72
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
+73
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
+74
+
+75
+lib/features/settings/settings_page.dart:587:44: Error: 'Station' isn't a type.
+76
+    final stationList = stations.whereType<Station>().toList();
+77
+                                           ^^^^^^^
+78
+lib/features/settings/settings_page.dart:597:46: Error: Not a constant expression.
+79
+              onPressed: () => Navigator.pop(context, 'm3u'),
+80
+                                             ^^^^^^^
+81
+lib/features/settings/settings_page.dart:597:42: Error: Method invocation is not a constant expression.
+82
+              onPressed: () => Navigator.pop(context, 'm3u'),
+83
+                                         ^^^
+84
+lib/features/settings/settings_page.dart:597:26: Error: Not a constant expression.
+85
+              onPressed: () => Navigator.pop(context, 'm3u'),
+86
+                         ^^
+87
+lib/features/settings/settings_page.dart:601:46: Error: Not a constant expression.
+88
+              onPressed: () => Navigator.pop(context, 'm3u8'),
+89
+                                             ^^^^^^^
+90
+lib/features/settings/settings_page.dart:601:42: Error: Method invocation is not a constant expression.
+91
+              onPressed: () => Navigator.pop(context, 'm3u8'),
+92
+                                         ^^^
+93
+lib/features/settings/settings_page.dart:601:26: Error: Not a constant expression.
+94
+              onPressed: () => Navigator.pop(context, 'm3u8'),
+95
+                         ^^
+96
+lib/features/settings/settings_page.dart:605:46: Error: Not a constant expression.
+97
+              onPressed: () => Navigator.pop(context, 'json'),
+98
+                                             ^^^^^^^
+99
+lib/features/settings/settings_page.dart:605:42: Error: Method invocation is not a constant expression.
+100
+              onPressed: () => Navigator.pop(context, 'json'),
+101
+                                         ^^^
+102
+lib/features/settings/settings_page.dart:605:26: Error: Not a constant expression.
+103
+              onPressed: () => Navigator.pop(context, 'json'),
+104
+                         ^^
+105
+Target kernel_snapshot_program failed: Exception
+106
+
+107
+
+108
+FAILURE: Build failed with an exception.
+109
+
+110
+* What went wrong:
+111
+Execution failed for task ':app:compileFlutterBuildRelease'.
+112
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+113
+
+114
+* Try:
+115
+> Run with --stacktrace option to get the stack trace.
+116
+> Run with --info or --debug option to get more log output.
+117
+> Run with --scan to get full insights.
+118
+> Get more help at https://help.gradle.org.
+119
+
+120
+BUILD FAILED in 3m
+121
+Running Gradle task 'assembleRelease'...                          185.3s
+122
+Gradle task assembleRelease failed with exit code 1
+123
 Error: Process completed with exit code 1.

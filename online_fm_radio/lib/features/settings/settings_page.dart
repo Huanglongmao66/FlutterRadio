@@ -6,6 +6,7 @@ import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/import_export_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/data/models/country.dart';
+import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -590,20 +591,20 @@ class SettingsPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('选择导出格式'),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextButton(
               onPressed: () => Navigator.pop(context, 'm3u'),
-              child: Text('M3U 格式'),
+              child: const Text('M3U 格式'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 'm3u8'),
-              child: Text('M3U8 格式'),
+              child: const Text('M3U8 格式'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 'json'),
-              child: Text('JSON 格式'),
+              child: const Text('JSON 格式'),
             ),
           ],
         ),
