@@ -8,9 +8,15 @@ class CountryPreferenceService extends ChangeNotifier {
 
   String? get selectedCountry => _selectedCountry;
 
+  /// 加载已持久化的国家偏好。如果用户从未设置过，默认使用 "China"。
   Future<void> loadCountry() async {
     final prefs = await SharedPreferences.getInstance();
     _selectedCountry = prefs.getString(_storageKey);
+    // 首次使用默认中国，让用户打开推荐页即可看到国内电台。
+    if (_selectedCountry == null || _selectedCountry!.isEmpty) {
+      _selectedCountry = 'China';
+      await prefs.setString(_storageKey, 'China');
+    }
     notifyListeners();
   }
 

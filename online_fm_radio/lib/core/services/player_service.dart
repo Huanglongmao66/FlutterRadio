@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
@@ -58,7 +59,18 @@ class PlayerService extends ChangeNotifier {
     _historyService?.addToHistory(station);
 
     try {
-      await _player.setUrl(station.streamUrl);
+      // 使用 AudioSource.uri + MediaItem tag 支持后台播放通知栏。
+      await _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(station.streamUrl),
+          tag: MediaItem(
+            id: station.id,
+            title: station.name,
+            artUri: Uri.tryParse(station.logo),
+            album: station.country,
+          ),
+        ),
+      );
       await _player.play();
     } catch (e) {
       _handlePlaybackError(e.toString());
