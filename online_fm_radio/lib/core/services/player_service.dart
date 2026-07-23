@@ -2,81 +2,78 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:online_fm_radio/core/services/audio_background_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
-/// 播放器服务：统一管理音频播放状态，集成后台播放能力。
-/// 内部通过 AudioBackgroundService 实现后台播放，同时保持 ChangeNotifier 供 UI 监听。
+/// 播放器服务：统一管理音频播放状态。
+/// - 后台服务可用时（`audioBackgroundService != null`）：通过后台服务播放，支持通知栏控制和后台播放；
+/// - 后台服务不可用时：降级为直接使用 just_audio 前台播放，不影响应用启动。
 class PlayerService extends ChangeNotifier {
-  /// 后台音频服务（全局单例）。
-  AudioBackgroundService get _backgroundService => audioBackgroundService;
+  /// 后台服务实例（可能为 null，表示降级为前台播放模式）。
+  AudioBackgroundService? get _backgroundService => audioBackgroundService;
 
-  /// 当前播放电台。
+  /// 降级模式下直接使用的播放器（后台服务不可用时启用）。
+  AudioPlayer? _fallbackPlayer;
+
+  /// 降级模式下的播放状态订阅。
+  StreamSubscription<PlayerState>? _fallbackStateSubscription;
+
   Station? _currentStation;
-
-  /// 是否正在播放。
   bool _isPlaying = false;
-
-  /// 是否正在缓冲。
   bool _isBuffering = false;
-
-  /// 错误信息。
   String? _errorMessage;
-
-  /// 重试次数。
   int _retryCount = 0;
-
-  /// 当前音量。
   double _volume = 0.5;
-
-  /// 最大重试次数。
   static const int _maxRetryCount = 3;
 
-  /// 可选的历史服务，用于记录播放历史。
   final HistoryService? _historyService;
 
-  /// 播放状态订阅（监听后台服务状态变化）。
+  /// 后台服务播放状态订阅（后台模式）。
   StreamSubscription<PlaybackState>? _playbackStateSubscription;
 
-  /// 当前播放电台。
   Station? get currentStation => _currentStation;
-
-  /// 是否正在播放。
   bool get isPlaying => _isPlaying;
-
-  /// 是否正在缓冲。
   bool get isBuffering => _isBuffering;
-
-  /// 错误信息。
   String? get errorMessage => _errorMessage;
-
-  /// 当前音量。
   double get volume => _volume;
+
+  /// 是否启用了后台播放模式。
+  bool get hasBackgroundService => _backgroundService != null;
 
   PlayerService({HistoryService? historyService})
       : _historyService = historyService {
     _initPlayer();
   }
 
-  /// 初始化播放器，绑定后台服务状态监听。
+  /// 初始化播放器：根据后台服务是否可用选择模式。
   void _initPlayer() {
-    // 监听后台服务的播放状态变化，同步到本地状态。
-    _playbackStateSubscription = AudioService.playbackStateStream.listen((state) {
-      _isPlaying = state.playing;
-      _isBuffering =
-          state.processingState == AudioProcessingState.buffering ||
-              state.processingState == AudioProcessingState.loading;
-      notifyListeners();
-    });
-
-    // 监听后台服务的媒体项变化。
-    AudioService.currentMediaItemStream.listen((mediaItem) {
-      if (mediaItem != null && _currentStation != null) {
-        // 更新当前电台信息。
+    if (hasBackgroundService) {
+      // 后台模式：监听 audio_service 状态流。
+      _playbackStateSubscription = AudioService.playbackStateStream.listen((state) {
+        _isPlaying = state.playing;
+        _isBuffering =
+            state.processingState == AudioProcessingState.buffering ||
+                state.processingState == AudioProcessingState.loading;
         notifyListeners();
-      }
-    });
+      });
+    } else {
+      // 降级模式：直接使用 just_audio。
+      _fallbackPlayer = AudioPlayer();
+      _fallbackStateSubscription = _fallbackPlayer!.playerStateStream.listen((state) {
+        _isPlaying = state.playing;
+        _isBuffering = state.processingState == ProcessingState.buffering ||
+            state.processingState == ProcessingState.loading;
+
+        if (state.processingState == ProcessingState.completed) {
+          stop();
+        }
+
+        notifyListeners();
+      });
+      _fallbackPlayer!.setVolume(_volume);
+    }
   }
 
   /// 播放指定电台。
@@ -91,8 +88,12 @@ class PlayerService extends ChangeNotifier {
     _historyService?.addToHistory(station);
 
     try {
-      // 通过后台服务播放，确保后台时也能继续播放。
-      await _backgroundService.playStation(station);
+      if (hasBackgroundService) {
+        await _backgroundService!.playStation(station);
+      } else if (_fallbackPlayer != null) {
+        await _fallbackPlayer!.setUrl(station.streamUrl);
+        await _fallbackPlayer!.play();
+      }
     } catch (e) {
       _handlePlaybackError(e.toString());
     }
@@ -102,7 +103,11 @@ class PlayerService extends ChangeNotifier {
   Future<void> pause() async {
     if (!_isPlaying) return;
 
-    await _backgroundService.pausePlayback();
+    if (hasBackgroundService) {
+      await _backgroundService!.pausePlayback();
+    } else {
+      await _fallbackPlayer?.pause();
+    }
     _isPlaying = false;
     notifyListeners();
   }
@@ -111,14 +116,22 @@ class PlayerService extends ChangeNotifier {
   Future<void> resume() async {
     if (_isPlaying || _currentStation == null) return;
 
-    await _backgroundService.resumePlayback();
+    if (hasBackgroundService) {
+      await _backgroundService!.resumePlayback();
+    } else {
+      await _fallbackPlayer?.play();
+    }
     _isPlaying = true;
     notifyListeners();
   }
 
   /// 停止播放。
   Future<void> stop() async {
-    await _backgroundService.stopPlayback();
+    if (hasBackgroundService) {
+      await _backgroundService!.stopPlayback();
+    } else {
+      await _fallbackPlayer?.stop();
+    }
     _currentStation = null;
     _isPlaying = false;
     _isBuffering = false;
@@ -127,7 +140,7 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 处理播放错误。
+  /// 处理播放错误，自动重试。
   void _handlePlaybackError(String message) {
     _errorMessage = message;
     _isBuffering = false;
@@ -146,27 +159,42 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 跳转播放位置（电台流通常不支持跳转）。
+  /// 跳转播放位置（电台流通常不支持）。
   Future<void> seek(Duration position) async {
-    await _backgroundService.seek(position);
+    if (hasBackgroundService) {
+      await _backgroundService!.seek(position);
+    } else {
+      await _fallbackPlayer?.seek(position);
+    }
   }
 
-  /// 获取播放位置流。
-  Stream<Duration?> get positionStream => AudioService.positionStream;
+  /// 播放位置流。
+  Stream<Duration?> get positionStream {
+    if (hasBackgroundService) {
+      return AudioService.positionStream;
+    }
+    return _fallbackPlayer?.positionStream ?? Stream.value(null);
+  }
 
-  /// 获取播放时长流。
+  /// 播放时长流（电台直播流返回 null）。
   Stream<Duration?> get durationStream => Stream.value(null);
 
   /// 设置音量。
   void setVolume(double volume) {
     _volume = volume.clamp(0.0, 1.0);
-    _backgroundService.setVolume(_volume);
+    if (hasBackgroundService) {
+      _backgroundService!.setVolume(_volume);
+    } else {
+      _fallbackPlayer?.setVolume(_volume);
+    }
     notifyListeners();
   }
 
   @override
   void dispose() {
     _playbackStateSubscription?.cancel();
+    _fallbackStateSubscription?.cancel();
+    _fallbackPlayer?.dispose();
     super.dispose();
   }
 }

@@ -1,6 +1,4 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/constants/app_constants.dart';
 import 'package:online_fm_radio/core/services/audio_background_service.dart';
@@ -29,22 +27,11 @@ import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await JustAudioBackground.init(
-    androidNotificationChannelId: AppConstants.audioNotificationChannelId,
-    androidNotificationChannelName: AppConstants.audioNotificationChannelName,
-    androidNotificationOngoing: true,
+  // 后台音频服务初始化（失败时降级为前台播放，不阻塞应用启动）。
+  audioBackgroundService = await initAudioBackgroundService(
+    channelId: AppConstants.audioNotificationChannelId,
+    channelName: AppConstants.audioNotificationChannelName,
   );
-
-  final handler = await AudioService.init(
-    builder: () => AudioBackgroundService(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: AppConstants.audioNotificationChannelId,
-      androidNotificationChannelName: AppConstants.audioNotificationChannelName,
-      androidNotificationOngoing: true,
-    ),
-  );
-
-  audioBackgroundService = handler as AudioBackgroundService;
 
   runApp(const MyApp());
 }
