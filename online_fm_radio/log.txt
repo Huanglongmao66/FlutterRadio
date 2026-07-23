@@ -1,235 +1,189 @@
 Run cd online_fm_radio && flutter build apk --release
 7
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-8
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-9
-
-10
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-11
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-12
-
-13
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-14
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-15
-
-16
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-17
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-18
-
-19
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-20
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-21
-
-22
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-23
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-24
-
-25
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-26
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-27
-
-28
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-29
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-30
-
-31
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-32
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-33
-
-34
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-35
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-36
-
-37
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-38
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-39
-
-40
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-41
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-42
-
-43
 Upgrading build.gradle
-44
+8
 Upgrading gradle.properties
-45
+9
 Upgrading gradle.properties
-46
+10
 Running Gradle task 'assembleRelease'...                        
-47
+11
 Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-48
+12
 Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-49
+13
 
-50
+14
 Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
-51
+15
 If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
-52
+16
 
-53
+17
 Warning: Flutter support for your project's Kotlin version (2.0.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
-54
+18
 Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-55
+19
 
-56
+20
 Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
-57
+21
 If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
+22
+
+23
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 9092 bytes (99.4% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+24
+e: Incompatible classes were found in dependencies. Remove them from the classpath or use '-Xskip-metadata-version-check' to suppress errors
+25
+e: file:///home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/META-INF/kotlin-stdlib-jdk7.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.2.0, expected version is 2.0.0.
+26
+e: file:///home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/META-INF/kotlin-stdlib-jdk8.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.2.0, expected version is 2.0.0.
+27
+e: file:///home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/META-INF/kotlin-stdlib.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.2.0, expected version is 2.0.0.
+28
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:24:9 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+29
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
+30
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:29:9 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+31
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
+32
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:46:31 Unresolved reference 'HashMap'.
+33
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:48:21 Unresolved reference 'put'.
+34
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:49:21 Unresolved reference 'put'.
+35
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:50:21 Unresolved reference 'put'.
+36
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:51:21 Unresolved reference 'put'.
+37
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:52:49 Unresolved reference 'put'.
+38
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:53:51 Unresolved reference 'put'.
+39
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:54:21 Unresolved reference 'put'.
+40
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:55:21 Unresolved reference 'put'.
+41
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:56:26 Cannot infer type for this parameter. Please specify it explicitly.
+42
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:57:21 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+43
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
+44
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:60:17 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+45
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
+46
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:63:13 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+47
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
+48
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:77:14 Class 'kotlin.Suppress' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+49
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Suppress.class
+50
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:82:6 Class 'kotlin.Suppress' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+51
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Suppress.class
+52
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:91:6 Class 'kotlin.Suppress' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
+53
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Suppress.class
+54
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:102:70 Unresolved reference 'first'.
+55
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:104:77 Unresolved reference 'first'.
+56
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:113:32 Unresolved reference 'isNullOrEmpty'.
+57
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:113:62 Unresolved reference 'first'.
 58
-
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:116:50 Unresolved reference 'first'.
 59
-Checking the license for package Android SDK Platform 33 in /usr/local/lib/android/sdk/licenses
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:127:6 Class 'kotlin.jvm.Throws' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
 60
-License for package Android SDK Platform 33 accepted.
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/jvm/Throws.class
 61
-Preparing "Install Android SDK Platform 33 (revision 3)".
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:130:9 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
 62
-"Install Android SDK Platform 33 (revision 3)" ready.
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
 63
-Installing Android SDK Platform 33 in /usr/local/lib/android/sdk/platforms/android-33
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:142:19 For-loop range must have an 'iterator()' method.
 64
-"Install Android SDK Platform 33 (revision 3)" complete.
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:142:25 Unresolved reference 'indices'.
 65
-"Install Android SDK Platform 33 (revision 3)" finished.
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:144:13 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
 66
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
 67
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:145:13 Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.2.0, but the compiler version 2.0.0 can read versions up to 2.1.0.
 68
-
+The class is loaded from /home/runner/.gradle/caches/8.14/transforms/60f62bf8077032c526ad722358b4a6a1/transformed/jetified-kotlin-stdlib-2.2.0.jar!/kotlin/Unit.class
 69
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:145:22 Argument type mismatch: actual type is 'kotlin.String', but 'kotlin.Int' was expected.
 70
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+e: file:///home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt:147:23 Too many arguments for 'public constructor(): kotlin/String'.
 71
 
 72
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
+FAILURE: Build failed with an exception.
 73
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-74
 
+74
+* What went wrong:
 75
-Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 6484 bytes (99.6% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Execution failed for task ':package_info_plus:compileReleaseKotlin'.
 76
-/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
 77
-    public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
+   > Compilation error. See log for more details
 78
-                                                                                 ^
+
 79
-  symbol:   class Registrar
+* Try:
 80
-  location: interface PluginRegistry
+> Run with --stacktrace option to get the stack trace.
 81
-/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
+> Run with --info or --debug option to get more log output.
 82
-            final PluginRegistry.Registrar registrar,
+> Run with --scan to get full insights.
 83
-                                ^
+> Get more help at https://help.gradle.org.
 84
-  symbol:   class Registrar
+
 85
-  location: interface PluginRegistry
+BUILD FAILED in 3m 43s
 86
-2 errors
+Running Gradle task 'assembleRelease'...                          225.3s
 87
 
 88
-FAILURE: Build failed with an exception.
+┌─ Flutter Fix ────────────────────────────────────────────────────────────────────────────────┐
 89
-
+│ [!] Your project requires a newer version of the Kotlin Gradle plugin.                       │
 90
-* What went wrong:
+│ Find the latest version on https://kotlinlang.org/docs/releases.html#release-details, then   │
 91
-Execution failed for task ':file_picker:compileReleaseJavaWithJavac'.
+│ update the                                                                                   │
 92
-> Compilation failed; see the compiler output below.
+│ version number of the plugin with id "org.jetbrains.kotlin.android" in the plugins block of  │
 93
-  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
+│ /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle.         │
 94
-      public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
+│                                                                                              │
 95
-                                                                                   ^
+│ Alternatively (if your project was created before Flutter 3.19), update                      │
 96
-    symbol:   class Registrar
+│ /home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle             │
 97
-    location: interface PluginRegistry
+│ ext.kotlin_version = '<latest-version>'                                                      │
 98
-  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
 99
-              final PluginRegistry.Registrar registrar,
-100
-                                  ^
-101
-    symbol:   class Registrar
-102
-    location: interface PluginRegistry
-103
-  2 errors
-104
-
-105
-* Try:
-106
-> Check your code and dependencies to fix the compilation error(s)
-107
-> Run with --scan to get full insights.
-108
-
-109
-BUILD FAILED in 3m 35s
-110
-Running Gradle task 'assembleRelease'...                          217.4s
-111
-
-112
-┌─ Flutter Fix ───────────────────────────────────────────────────────────────────────────────────┐
-113
-│ [!] Consult the error logs above to identify any broken plugins, specifically those containing  │
-114
-│ "error: cannot find symbol..."                                                                  │
-115
-│ This issue is likely caused by v1 embedding removal and the plugin's continued usage of removed │
-116
-│ references to the v1 embedding.                                                                 │
-117
-│ To fix this error, please upgrade your current package's dependencies to latest versions by     │
-118
-│ running `flutter pub upgrade`.                                                                  │
-119
-│ If that does not work, please file an issue for the problematic plugin(s) here:                 │
-120
-│ https://github.com/flutter/flutter/issues                                                       │
-121
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-122
 Gradle task assembleRelease failed with exit code 1
-123
+100
 Error: Process completed with exit code 1.
