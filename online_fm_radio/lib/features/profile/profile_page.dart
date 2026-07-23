@@ -6,9 +6,15 @@ import 'package:online_fm_radio/core/services/station_update_service.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/features/home/home_page_view_model.dart';
+import 'package:online_fm_radio/data/models/radio_stats.dart';
 import 'package:online_fm_radio/data/models/station.dart';
+import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 
+/// "我的"页面
+///
+/// 包含用户信息、设置入口、电台数据更新、收藏列表和播放历史。
+/// 监听 StationUpdateService 以显示更新进度和结果。
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -17,6 +23,40 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final StationRepository _repository = StationRepository();
+  RadioStats? _stats;
+  bool _loadingStats = true;
+  String? _statsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    setState(() {
+      _loadingStats = true;
+      _statsError = null;
+    });
+    try {
+      final stats = await _repository.loadLocalStats();
+      if (mounted) {
+        setState(() {
+          _stats = stats;
+          _loadingStats = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _statsError = e.toString();
+          _loadingStats = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: const AppTopBar(title: '我的'),
       body: Consumer<StationUpdateService>(
         builder: (context, updateService, child) {
+          /// 更新完成后刷新主页数据并显示结果
           if (updateService.updateComplete) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Provider.of<HomePageViewModel>(context, listen: false).refresh();
@@ -46,6 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建用户信息区域
   Widget _buildUserProfile(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -62,7 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SizedBox(height: 16),
           Text(
-            'Fradoi 用户',
+            'FMradio 用户',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -81,6 +123,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建设置区域
   Widget _buildSettingsSection(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -112,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () {
                 showAboutDialog(
                   context: context,
-                  applicationName: 'Fradoi',
+                  applicationName: 'FMradio',
                   applicationVersion: '1.0.0',
                   applicationIcon: const Icon(Icons.radio, size: 48),
                 );
@@ -124,6 +167,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建电台数据更新区域
+  ///
+  /// [updateService] - 电台更新服务
   Widget _buildUpdateStationSection(
       BuildContext context, StationUpdateService updateService) {
     return Container(
@@ -160,6 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                 ],
               ),
+              const SizedBox(height: 12),
+              _buildStatsGrid(),
               if (updateService.isUpdating) ...[
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
@@ -181,15 +229,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   '更新失败: ${updateService.errorMessage}',
                   style: const TextStyle(fontSize: 12, color: Colors.red),
                 ),
-              ] else ...[
-                const SizedBox(height: 4),
-                Text(
-                  '点击更新从服务器获取最新电台列表',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
-                ),
               ],
             ],
           ),
@@ -198,6 +237,89 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建统计数据网格
+  Widget _buildStatsGrid() {
+    if (_loadingStats) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_statsError != null) {
+      return Center(
+        child: Column(
+          children: [
+            Text(
+              '数据加载失败',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+            TextButton(
+              onPressed: _loadStats,
+              child: const Text('重试'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_stats == null) return const SizedBox.shrink();
+
+    final items = [
+      _StatItem(Icons.radio, '本地电台', '${_stats!.stations}'),
+      _StatItem(Icons.public, '国家', '${_stats!.countries}'),
+      _StatItem(Icons.language, '语言', '${_stats!.languages}'),
+      _StatItem(Icons.label, '标签', '${_stats!.tags}'),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.3,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(item.icon, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 4),
+              Text(
+                item.value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 启动电台数据更新
+  ///
+  /// [service] - 电台更新服务
   void _startUpdate(BuildContext context, StationUpdateService service) {
     service.updateAllStations();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -208,6 +330,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 显示更新结果提示
+  ///
+  /// [service] - 电台更新服务
   void _showUpdateResult(BuildContext context, StationUpdateService service) {
     if (service.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -227,6 +352,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  /// 构建收藏频道区域
   Widget _buildFavoritesSection(BuildContext context) {
     return Consumer<FavoritesService>(
       builder: (context, favoritesService, child) {
@@ -262,11 +388,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建收藏列表
   Widget _buildFavoritesList(BuildContext context) {
     return Consumer<FavoritesService>(
       builder: (context, favoritesService, child) {
-        // 直接使用 FavoritesService 中保存的完整 Station 列表，
-        // 不再依赖播放历史查找，确保收藏电台可正常播放。
+        /// 直接使用 FavoritesService 中保存的完整 Station 列表，
+        /// 不再依赖播放历史查找，确保收藏电台可正常播放。
         final favoriteStations = favoritesService.favorites;
 
         if (favoriteStations.isEmpty) {
@@ -290,6 +417,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建播放历史区域
   Widget _buildHistorySection(BuildContext context) {
     return Consumer<HistoryService>(
       builder: (context, historyService, child) {
@@ -325,6 +453,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 构建播放历史列表
   Widget _buildHistoryList(BuildContext context) {
     return Consumer<HistoryService>(
       builder: (context, historyService, child) {
@@ -349,6 +478,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 导航到播放页面
+  ///
+  /// [station] - 要播放的电台
   void _navigateToPlayer(BuildContext context, Station station) {
     Navigator.pushNamed(
       context,
@@ -357,6 +489,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 确认清空收藏
   void _confirmClearFavorites(BuildContext context) {
     showDialog(
       context: context,
@@ -380,6 +513,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 确认清空播放历史
   void _confirmClearHistory(BuildContext context) {
     showDialog(
       context: context,
@@ -402,4 +536,13 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+}
+
+/// 统计数据项
+class _StatItem {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  _StatItem(this.icon, this.label, this.value);
 }

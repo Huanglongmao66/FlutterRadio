@@ -5,10 +5,19 @@ import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/import_export_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/core/services/visualizer_settings_service.dart';
 import 'package:online_fm_radio/data/models/country.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
 
+/// 设置页面
+///
+/// 提供应用各项设置功能，包括：
+/// - 国家/地区偏好选择
+/// - 主题模式切换（浅色/深色/跟随系统）
+/// - 定时关闭设置
+/// - 数据管理（导入/导出电台列表、清空收藏/历史/缓存）
+/// - 关于应用信息
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -23,6 +32,7 @@ class SettingsPage extends StatelessWidget {
         children: [
           _buildCountrySection(context),
           _buildThemeSection(context),
+          _buildVisualizerSection(context),
           _buildSleepTimerSection(context),
           _buildDataManagementSection(context),
           _buildAboutSection(context),
@@ -31,6 +41,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 构建国家/地区设置区域
   Widget _buildCountrySection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -81,6 +92,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 显示国家选择对话框
+  ///
+  /// [context] - 构建上下文
+  /// [service] - 国家偏好服务实例
   void _showCountryPicker(
     BuildContext context,
     CountryPreferenceService service,
@@ -208,6 +223,7 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
+  /// 构建主题设置区域
   Widget _buildThemeSection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -242,6 +258,11 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 构建主题模式按钮
+  ///
+  /// [context] - 构建上下文
+  /// [label] - 按钮文字
+  /// [icon] - 按钮图标
   Widget _buildThemeButton(BuildContext context, String label, IconData icon) {
     return ElevatedButton(
       onPressed: () {
@@ -265,6 +286,72 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 构建动效设置区域
+  Widget _buildVisualizerSection(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '动效设置',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Consumer<VisualizerSettingsService>(
+              builder: (context, service, child) {
+                return Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('启用动效'),
+                      subtitle: const Text('播放时显示音乐可视化动效'),
+                      value: service.isEnabled,
+                      onChanged: service.setEnabled,
+                    ),
+                    const SizedBox(height: 12),
+                    if (service.isEnabled) ...[
+                      const Text(
+                        '柱子宽度',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 8),
+                      Slider(
+                        value: service.barWidthFactor,
+                        min: 0.3,
+                        max: 0.7,
+                        divisions: 4,
+                        label: service.barWidthFactor < 0.4 ? '细' : service.barWidthFactor > 0.6 ? '粗' : '适中',
+                        onChanged: service.setBarWidthFactor,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '动效速度',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 8),
+                      Slider(
+                        value: service.speedFactor,
+                        min: 0.5,
+                        max: 2.0,
+                        divisions: 3,
+                        label: service.speedFactor < 1.0 ? '慢' : service.speedFactor > 1.5 ? '快' : '正常',
+                        onChanged: service.setSpeedFactor,
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建定时关闭设置区域
   Widget _buildSleepTimerSection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -336,6 +423,9 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 构建数据管理区域
+  ///
+  /// 包含导入/导出电台列表、清空收藏/历史/缓存等功能
   Widget _buildDataManagementSection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -417,6 +507,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 构建关于信息区域
   Widget _buildAboutSection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -436,7 +527,7 @@ class SettingsPage extends StatelessWidget {
                   Icon(Icons.radio, size: 64, color: Color(0xFF6366F1)),
                   SizedBox(height: 16),
                   Text(
-                    'Fradoi',
+                    'FMradio',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
@@ -464,6 +555,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 确认清空收藏对话框
   void _confirmClearFavorites(BuildContext context) {
     showDialog(
       context: context,
@@ -490,6 +582,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 确认清空播放记录对话框
   void _confirmClearHistory(BuildContext context) {
     showDialog(
       context: context,
@@ -516,6 +609,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 确认清除缓存对话框
   void _confirmClearCache(BuildContext context) {
     showDialog(
       context: context,
@@ -541,6 +635,9 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  /// 格式化时长为可读字符串
+  ///
+  /// [duration] - 要格式化的时长
   String _formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
@@ -552,6 +649,9 @@ class SettingsPage extends StatelessWidget {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
+  /// 导入电台列表
+  ///
+  /// 从文件选择器选择文件并导入电台数据，自动去重后添加到收藏
   Future<void> _importStations(BuildContext context) async {
     final service = ImportExportService();
     try {
@@ -583,6 +683,11 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
+  /// 导出收藏电台列表
+  ///
+  /// [context] - 构建上下文
+  /// [stations] - 要导出的电台列表
+  /// 弹出格式选择对话框，支持 M3U/M3U8/JSON 三种格式
   Future<void> _exportStations(BuildContext context, List<dynamic> stations) async {
     final service = ImportExportService();
     final stationList = stations.whereType<Station>().toList();

@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 
+/// 应用主题配置类
+///
+/// 定义应用的全局主题样式，包括亮色模式和暗色模式。
+/// 统一管理颜色、字体、组件样式等设计元素。
 class AppTheme {
+  /// 主色调（Indigo）
   static const Color _primaryColor = Color(0xFF6366F1);
+
+  /// 次要色调（Violet）
   static const Color _secondaryColor = Color(0xFF8B5CF6);
+
+  /// 强调色调（Blue）
   static const Color _accentColor = Color(0xFF3B82F6);
 
+  /// 主色调渐变（用于背景、按钮等）
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [_primaryColor, _secondaryColor],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
+  /// 亮色主题配置
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -67,6 +78,7 @@ class AppTheme {
     );
   }
 
+  /// 暗色主题配置
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -126,6 +138,7 @@ class AppTheme {
     );
   }
 
+  /// 播放页面背景渐变装饰
   static BoxDecoration get playerGradientBackground {
     return const BoxDecoration(
       gradient: LinearGradient(

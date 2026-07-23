@@ -13,6 +13,9 @@ class MusicVisualizer extends StatefulWidget {
   final VisualizerStyle style;
   final Color color;
   final double height;
+  final double width;
+  final bool isEnabled;
+  final double barWidthFactor;
 
   const MusicVisualizer({
     super.key,
@@ -20,6 +23,9 @@ class MusicVisualizer extends StatefulWidget {
     this.style = VisualizerStyle.bars,
     this.color = Colors.white,
     this.height = 60,
+    this.width = 200,
+    this.isEnabled = true,
+    this.barWidthFactor = 0.5,
   });
 
   @override
@@ -64,6 +70,12 @@ class _MusicVisualizerState extends State<MusicVisualizer>
 
   void _updateAnimation() {
     setState(() {
+      if (!widget.isEnabled) {
+        for (int i = 0; i < _barCount; i++) {
+          _barHeights[i] += (0.15 - _barHeights[i]) * 0.1;
+        }
+        return;
+      }
       if (widget.isPlaying) {
         // 播放中：柱状高度随机跳动
         for (int i = 0; i < _barCount; i++) {
@@ -103,13 +115,14 @@ class _MusicVisualizerState extends State<MusicVisualizer>
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.height,
-      width: double.infinity,
+      width: widget.width,
       child: CustomPaint(
         painter: _VisualizerPainter(
           style: widget.style,
           color: widget.color,
           barHeights: _barHeights,
           particles: _particles,
+          barWidthFactor: widget.barWidthFactor,
         ),
       ),
     );
@@ -121,12 +134,14 @@ class _VisualizerPainter extends CustomPainter {
   final Color color;
   final List<double> barHeights;
   final List<_Particle> particles;
+  final double barWidthFactor;
 
   _VisualizerPainter({
     required this.style,
     required this.color,
     required this.barHeights,
     required this.particles,
+    this.barWidthFactor = 0.5,
   });
 
   @override
@@ -149,8 +164,8 @@ class _VisualizerPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    final barWidth = size.width / barHeights.length * 0.6;
-    final gap = size.width / barHeights.length * 0.4;
+    final barWidth = size.width / barHeights.length * barWidthFactor;
+    final gap = size.width / barHeights.length * (1 - barWidthFactor);
     final totalWidth = barWidth + gap;
 
     for (int i = 0; i < barHeights.length; i++) {

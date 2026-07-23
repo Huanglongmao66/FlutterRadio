@@ -6,6 +6,13 @@ import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 
+/// 搜索页面：支持从本地缓存中搜索电台数据。
+///
+/// 核心功能：
+/// - 防抖搜索（300ms），避免频繁请求
+/// - 搜索范围：电台名称、国家、语言、分类、标签描述
+/// - 显示搜索结果数量和缓存总量
+/// - 支持清空搜索关键词
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -14,29 +21,50 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  /// 搜索输入控制器
   final TextEditingController _searchController = TextEditingController();
+
+  /// 电台数据仓库
   final StationRepository _repository = StationRepository();
+
+  /// 电台缓存服务
   final StationCacheService _cacheService = StationCacheService();
+
+  /// 搜索结果列表
   List<Station> _results = [];
+
+  /// 是否正在搜索中
   bool _isSearching = false;
+
+  /// 是否已执行过搜索
   bool _hasSearched = false;
+
+  /// 本地缓存的电台总数
   int _totalCached = 0;
+
+  /// 防抖定时器
   Timer? _debounce;
+
+  /// 防抖延迟时间（300ms）
   static const Duration _debounceDuration = Duration(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
+    /// 初始化时加载本地缓存数量
     _loadCacheCount();
   }
 
   @override
   void dispose() {
+    /// 取消防抖定时器
     _debounce?.cancel();
+    /// 释放搜索输入控制器
     _searchController.dispose();
     super.dispose();
   }
 
+  /// 加载本地缓存的电台总数
   Future<void> _loadCacheCount() async {
     final hasCache = await _cacheService.hasCache();
     if (hasCache) {
@@ -49,6 +77,10 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  /// 搜索关键词变化时的处理（防抖）
+  ///
+  /// - 清空关键词时重置搜索状态
+  /// - 设置防抖定时器，延迟执行搜索
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     if (value.trim().isEmpty) {
@@ -63,6 +95,14 @@ class _SearchPageState extends State<SearchPage> {
     _debounce = Timer(_debounceDuration, () => _performSearch(value));
   }
 
+  /// 执行搜索操作
+  ///
+  /// 从本地缓存中搜索电台，搜索范围包括：
+  /// - 电台名称
+  /// - 国家
+  /// - 语言
+  /// - 分类
+  /// - 标签描述
   Future<void> _performSearch(String keyword) async {
     if (keyword.trim().isEmpty) return;
     setState(() {
@@ -106,6 +146,9 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// 构建搜索栏组件
+  ///
+  /// 包含搜索输入框和清空按钮，自动聚焦
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -138,6 +181,9 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// 构建搜索结果数量显示
+  ///
+  /// 仅在搜索完成后显示结果数量
   Widget _buildResultCount() {
     if (!_hasSearched || _isSearching) {
       return const SizedBox.shrink();
@@ -157,6 +203,13 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// 构建搜索结果列表
+  ///
+  /// 根据搜索状态显示不同内容：
+  /// - 搜索中：显示加载指示器
+  /// - 未搜索：显示搜索提示和缓存数量
+  /// - 无结果：显示未找到提示
+  /// - 有结果：显示电台卡片列表
   Widget _buildSearchResults() {
     if (_isSearching) {
       return const Center(child: CircularProgressIndicator());

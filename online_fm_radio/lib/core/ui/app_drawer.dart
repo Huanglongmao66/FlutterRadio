@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// 应用侧边抽屉组件
+///
+/// 包含应用标题、导航菜单和功能入口。
+/// 部分功能（主题电台、录音、闹钟）尚未实现，点击时显示提示。
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -9,6 +13,7 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
+          /// 抽屉头部：应用名称和副标题
           DrawerHeader(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -21,7 +26,7 @@ class AppDrawer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'Fradoi',
+                  'FMradio',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -39,6 +44,7 @@ class AppDrawer extends StatelessWidget {
               ],
             ),
           ),
+          /// 主页导航
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('主页'),
@@ -46,6 +52,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
+          /// 探索导航
           ListTile(
             leading: const Icon(Icons.explore),
             title: const Text('探索'),
@@ -53,6 +60,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
+          /// 收藏导航
           ListTile(
             leading: const Icon(Icons.favorite),
             title: const Text('收藏'),
@@ -61,6 +69,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           const Divider(),
+          /// 主题电台（开发中）
           ListTile(
             leading: const Icon(Icons.radio),
             title: const Text('主题电台'),
@@ -71,6 +80,7 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+          /// 录音（开发中）
           ListTile(
             leading: const Icon(Icons.mic),
             title: const Text('录音'),
@@ -81,6 +91,7 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+          /// 闹钟（开发中）
           ListTile(
             leading: const Icon(Icons.alarm),
             title: const Text('闹钟'),
@@ -92,6 +103,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           const Divider(),
+          /// 设置页面
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('设置'),
@@ -100,6 +112,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/settings');
             },
           ),
+          /// 关于页面
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('关于'),

@@ -4,6 +4,7 @@ import 'package:online_fm_radio/data/models/station.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/core/services/visualizer_settings_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/theme/app_theme.dart';
 import 'package:online_fm_radio/shared/components/music_visualizer.dart';
@@ -41,24 +42,15 @@ class _PlayerPageState extends State<PlayerPage> {
             children: [
               _buildTopBar(),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _buildCountryRow(),
-                      const SizedBox(height: 16),
-                      _buildStationImage(),
-                      const SizedBox(height: 12),
-                      _buildVisualizer(),
-                      const SizedBox(height: 20),
-                      _buildActionIcons(),
-                      const SizedBox(height: 24),
-                      _buildPlaybackControls(),
-                      const SizedBox(height: 48),
-                      _buildHistoryHandle(),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
+                child: Column(
+                  children: [
+                    Expanded(flex: 2, child: _buildCountryRow()),
+                    Expanded(flex: 5, child: _buildStationImage()),
+                    Expanded(flex: 3, child: _buildVisualizer()),
+                    Expanded(flex: 4, child: _buildActionIcons()),
+                    Expanded(flex: 4, child: _buildPlaybackControls()),
+                    Expanded(flex: 2, child: _buildHistoryHandle()),
+                  ],
                 ),
               ),
             ],
@@ -110,24 +102,26 @@ class _PlayerPageState extends State<PlayerPage> {
     return Consumer<PlayerService>(
       builder: (context, playerService, child) {
         final s = playerService.currentStation ?? widget.station;
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (s.flagEmoji.isNotEmpty) ...[
+        return Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (s.flagEmoji.isNotEmpty) ...[
+                Text(
+                  s.flagEmoji,
+                  style: const TextStyle(fontSize: 22),
+                ),
+                const SizedBox(width: 8),
+              ],
               Text(
-                s.flagEmoji,
-                style: const TextStyle(fontSize: 20),
+                s.country,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white.withOpacity(0.85),
+                ),
               ),
-              const SizedBox(width: 8),
             ],
-            Text(
-              s.country,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.8),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -138,23 +132,28 @@ class _PlayerPageState extends State<PlayerPage> {
     return Consumer<PlayerService>(
       builder: (context, playerService, child) {
         final s = playerService.currentStation ?? widget.station;
-        return Container(
-          width: 150,
-          height: 150,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 3,
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.35),
+                    blurRadius: 24,
+                    spreadRadius: 4,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: StationLogo(
-            station: s,
-            size: 150,
-            borderRadius: 24,
+              child: StationLogo(
+                station: s,
+                size: 180,
+                borderRadius: 28,
+              ),
+            ),
           ),
         );
       },
@@ -163,29 +162,39 @@ class _PlayerPageState extends State<PlayerPage> {
 
   // ========== 音乐动效（可切换样式） ==========
   Widget _buildVisualizer() {
-    return Consumer<PlayerService>(
-      builder: (context, playerService, child) {
-        return GestureDetector(
-          onTap: _cycleVisualizerStyle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              children: [
-                MusicVisualizer(
-                  isPlaying: playerService.isPlaying,
-                  style: _visualizerStyle,
-                  color: Colors.white,
-                  height: 60,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _styleLabel(_visualizerStyle),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withOpacity(0.5),
+    return Consumer2<PlayerService, VisualizerSettingsService>(
+      builder: (context, playerService, visualizerService, child) {
+        // 动效开关关闭时隐藏整个组件
+        if (!visualizerService.isEnabled) {
+          return const SizedBox.shrink();
+        }
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: GestureDetector(
+              onTap: _cycleVisualizerStyle,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MusicVisualizer(
+                    isPlaying: playerService.isPlaying,
+                    style: _visualizerStyle,
+                    color: Colors.white,
+                    height: 70,
+                    width: 240,
+                    isEnabled: visualizerService.isEnabled,
+                    barWidthFactor: visualizerService.barWidthFactor,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    _styleLabel(_visualizerStyle),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -222,47 +231,49 @@ class _PlayerPageState extends State<PlayerPage> {
 
   // ========== 功能图标行 ==========
   Widget _buildActionIcons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Consumer<FavoritesService>(
-        builder: (context, favoritesService, child) {
-          final playerService =
-              Provider.of<PlayerService>(context, listen: false);
-          final s = playerService.currentStation ?? widget.station;
-          final isFav = favoritesService.isFavorite(s);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Consumer<FavoritesService>(
+          builder: (context, favoritesService, child) {
+            final playerService =
+                Provider.of<PlayerService>(context, listen: false);
+            final s = playerService.currentStation ?? widget.station;
+            final isFav = favoritesService.isFavorite(s);
 
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildActionIcon(
-                icon: Icons.volume_up,
-                label: '音量',
-                onTap: () => _showVolumeDialog(context),
-              ),
-              _buildActionIcon(
-                icon: Icons.alarm,
-                label: '闹钟',
-                onTap: () => _showSnack('闹钟功能开发中'),
-              ),
-              _buildActionIcon(
-                icon: Icons.timer_outlined,
-                label: '定时',
-                onTap: () => _showSleepTimerDialog(context),
-              ),
-              _buildActionIcon(
-                icon: Icons.mic_none,
-                label: '录音',
-                onTap: () => _showSnack('录音功能开发中'),
-              ),
-              _buildActionIcon(
-                icon: isFav ? Icons.favorite : Icons.favorite_border,
-                label: '收藏',
-                color: isFav ? Colors.red : null,
-                onTap: () => favoritesService.toggleFavorite(s),
-              ),
-            ],
-          );
-        },
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildActionIcon(
+                  icon: Icons.volume_up,
+                  label: '音量',
+                  onTap: () => _showVolumeDialog(context),
+                ),
+                _buildActionIcon(
+                  icon: Icons.alarm,
+                  label: '闹钟',
+                  onTap: () => _showSnack('闹钟功能开发中'),
+                ),
+                _buildActionIcon(
+                  icon: Icons.timer_outlined,
+                  label: '定时',
+                  onTap: () => _showSleepTimerDialog(context),
+                ),
+                _buildActionIcon(
+                  icon: Icons.mic_none,
+                  label: '录音',
+                  onTap: () => _showSnack('录音功能开发中'),
+                ),
+                _buildActionIcon(
+                  icon: isFav ? Icons.favorite : Icons.favorite_border,
+                  label: '收藏',
+                  color: isFav ? Colors.red : null,
+                  onTap: () => favoritesService.toggleFavorite(s),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -313,73 +324,78 @@ class _PlayerPageState extends State<PlayerPage> {
         final isPlaying = isCurrent && playerService.isPlaying;
         final isBuffering = isCurrent && playerService.isBuffering;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 上一首
-              IconButton(
-                icon: const Icon(Icons.skip_previous,
-                    size: 36, color: Colors.white70),
-                onPressed: () => _playPrevious(),
-              ),
-              const SizedBox(width: 28),
-              // 播放/暂停大按钮
-              GestureDetector(
-                onTap: isBuffering
-                    ? null
-                    : () {
-                        if (isCurrent) {
-                          if (isPlaying) {
-                            playerService.pause();
-                          } else {
-                            playerService.resume();
-                          }
-                        } else {
-                          playerService.play(s);
-                        }
-                      },
-                child: Container(
-                  width: 84,
-                  height: 84,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppTheme.primaryGradient,
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            const Color(0xFF6366F1).withOpacity(0.4),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 上一首
+                  IconButton(
+                    icon: const Icon(Icons.skip_previous,
+                        size: 40, color: Colors.white70),
+                    onPressed: () => _playPrevious(),
                   ),
-                  child: isBuffering
-                      ? const Padding(
-                          padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            color: Colors.white,
+                  const SizedBox(width: 32),
+                  // 播放/暂停大按钮
+                  GestureDetector(
+                    onTap: isBuffering
+                        ? null
+                        : () {
+                            if (isCurrent) {
+                              if (isPlaying) {
+                                playerService.pause();
+                              } else {
+                                playerService.resume();
+                              }
+                            } else {
+                              playerService.play(s);
+                            }
+                          },
+                    child: Container(
+                      width: 92,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppTheme.primaryGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF6366F1).withOpacity(0.45),
+                            blurRadius: 24,
+                            spreadRadius: 6,
                           ),
-                        )
-                      : Icon(
-                          isPlaying
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          size: 48,
-                          color: Colors.white,
-                        ),
-                ),
+                        ],
+                      ),
+                      child: isBuffering
+                          ? const Padding(
+                              padding: EdgeInsets.all(26),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Icon(
+                              isPlaying
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                              size: 52,
+                              color: Colors.white,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  // 下一首
+                  IconButton(
+                    icon: const Icon(Icons.skip_next,
+                        size: 40, color: Colors.white70),
+                    onPressed: () => _playNext(),
+                  ),
+                ],
               ),
-              const SizedBox(width: 28),
-              // 下一首
-              IconButton(
-                icon: const Icon(Icons.skip_next,
-                    size: 36, color: Colors.white70),
-                onPressed: () => _playNext(),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -388,33 +404,35 @@ class _PlayerPageState extends State<PlayerPage> {
 
   // ========== 上滑提示 handle ==========
   Widget _buildHistoryHandle() {
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {
-        if (details.delta.dy < -3) {
-          _showHistoryBottomSheet();
-        }
-      },
-      onTap: _showHistoryBottomSheet,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
+    return Center(
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          if (details.delta.dy < -3) {
+            _showHistoryBottomSheet();
+          }
+        },
+        onTap: _showHistoryBottomSheet,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '上滑查看最近播放',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withOpacity(0.5),
+            const SizedBox(height: 8),
+            Text(
+              '上滑查看最近播放',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withOpacity(0.5),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
