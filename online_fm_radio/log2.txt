@@ -1,0 +1,123 @@
+Run cd online_fm_radio && flutter build apk --release
+运行 cd online_fm_radio && flutter build apk --release
+Upgrading build.gradle
+ 正在升级 build.gradle
+Upgrading gradle.properties
+ 正在升级 gradle.properties
+Upgrading gradle.properties
+Running Gradle task 'assembleRelease'...                        
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
+Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
+If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+
+Warning: Flutter support for your project's Kotlin version (2.2.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
+Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
+If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
+
+lib/core/services/audio_handler.dart:37:21: Error: The return type of the method 'RadioAudioHandler.queue' is 'List<Station>', which does not match the return type, 'BehaviorSubject<List<MediaItem>>', of the overridden method, 'BaseAudioHandler.queue'.
+ - 'List' is from 'dart:core'.
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+ - 'BehaviorSubject' is from 'package:rxdart/src/subjects/behavior_subject.dart' ('../../../../.pub-cache/hosted/pub.dev/rxdart-0.28.0/lib/src/subjects/behavior_subject.dart').
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
+Change to a subtype of 'BehaviorSubject<List<MediaItem>>'.
+  List<Station> get queue => List.unmodifiable(_stationQueue);
+                    ^
+../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart:2992:42: Context: This is the overridden method ('queue').
+  final BehaviorSubject<List<MediaItem>> queue =
+                                         ^
+lib/core/services/audio_handler.dart:54:23: Error: Member not found: 'seekTo'.
+          MediaAction.seekTo,
+                      ^^^^^^
+lib/core/services/audio_handler.dart:118:20: Error: The argument type 'List<MediaItem>' can't be assigned to the parameter type 'Station'.
+ - 'List' is from 'dart:core'.
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+    this.queue.add(queueItems);
+                   ^
+lib/core/services/audio_handler.dart:127:54: Error: The getter 'value' isn't defined for the type 'List<Station>'.
+ - 'List' is from 'dart:core'.
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'value'.
+    final newQueue = List<MediaItem>.from(this.queue.value)
+                                                     ^^^^^
+lib/core/services/audio_handler.dart:129:20: Error: The argument type 'List<MediaItem>' can't be assigned to the parameter type 'Station'.
+ - 'List' is from 'dart:core'.
+ - `List` 来自 `dart:core`。
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
+- 'MediaItem' 来自 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart')。
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+- 'Station' 来自于 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart')。
+    this.queue.add(newQueue);
+     this. line.add（newQueue）；
+                   ^
+ 
+lib/core/services/audio_handler.dart:135:54: Error: The getter 'value' isn't defined for the type 'List<Station>'.
+lib/core/services/audio_handler.dart:135:54: 错误：获取器 'value' 未在类型 'List<Station>' 上定义。
+ - 'List' is from 'dart:core'.
+ - 'List' 来自 'dart:core'。
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+- 'Station' 来自 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart')。
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'value'.
+尝试将名称更正为现有 getter 的名称，或定义一个名为“value”的 getter 或字段。
+    final newQueue = List<MediaItem>.from(this.queue.value)..removeAt(index);
+                                                     ^^^^^
+ 
+lib/core/services/audio_handler.dart:136:20: Error: The argument type 'List<MediaItem>' can't be assigned to the parameter type 'Station'.
+lib/core/services/audio_handler.dart:136:20: 错误：参数类型“List<MediaItem>”无法分配给参数类型“Station”。
+ - 'List' is from 'dart:core'.
+ - 'List' 来自 'dart:core'。
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
+- 'MediaItem' 来自 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart')。
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+- 'Station' 来自 'package:online_fm_radio/data/models/station.dart'（'lib/data/models/station.dart'）。
+    this.queue.add(newQueue);
+     this. line.add（newQueue）；
+                   ^
+ 
+lib/core/services/audio_handler.dart:163:15: Error: The method 'add' isn't defined for the type 'MediaItem'.
+lib/core/services/audio_handler.dart:163:15: 错误：方法 'add' 未在类型 'MediaItem' 中定义。
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
+- 'MediaItem' 来自 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart')。
+Try correcting the name to the name of an existing method, or defining a method named 'add'.
+尝试将名称更正为现有方法的名称，或定义一个名为 'add' 的方法。
+    mediaItem.add(mediaItem);
+     mediaItem. add（mediaItem）；
+              ^^^
+ 
+Target kernel_snapshot_program failed: Exception
+目标内核快照程序失败：出现异常
+
+
+FAILURE: Build failed with an exception.
+构建失败，出现异常。
+
+* What went wrong:
+ * 出了什么问题：
+Execution failed for task ':app:compileFlutterBuildRelease'.
+任务 ':app:compileFlutterBuildRelease' 执行失败。
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+> 进程“命令 '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'”以非零退出值 1 结束
+
+* Try:
+ * 尝试：
+> Run with --stacktrace option to get the stack trace.
+> 运行 --stacktrace 选项以获取堆栈跟踪。
+> Run with --info or --debug option to get more log output.
+> 使用 --info 或 --debug 选项运行以获取更多日志输出。
+> Run with --scan to get full insights.
+> 运行 --scan 以获取完整的深入信息。
+> Get more help at https://help.gradle.org.
+> 前往 https://help.gradle.org 获取更多帮助。
+
+BUILD FAILED in 2m 49s
+ 构建失败，耗时2分49秒
+Running Gradle task 'assembleRelease'...                          172.3s
+正在运行 Gradle 任务 'assembleRelease'...                          172.3秒
+Gradle task assembleRelease failed with exit code 1
+Gradle 任务 assembleRelease 执行失败，退出代码为 1
+Error: Process completed with exit code 1.
+错误：进程以退出代码 1 完成。
