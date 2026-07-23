@@ -9,12 +9,7 @@ import '../models/station.dart';
 import '../models/tag.dart';
 
 class LocalStationDatasource {
-  static const List<String> _apiServers = [
-    'http://api.radio-browser.info/json',
-    'http://nl1.api.radio-browser.info/json',
-    'http://fr1.api.radio-browser.info/json',
-    'http://de1.api.radio-browser.info/json',
-  ];
+  static const String _apiServer = 'http://de1.api.radio-browser.info/json';
 
   static const int _pageSize = 30;
   static const int _batchSize = 200;
@@ -22,7 +17,6 @@ class LocalStationDatasource {
 
   final Dio _dio;
   final StationCacheService _cacheService;
-  int _currentServerIndex = 0;
 
   LocalStationDatasource({
     Dio? dio,
@@ -105,20 +99,12 @@ class LocalStationDatasource {
   }
 
   Future<Response> _request(String path, {Map<String, dynamic>? queryParameters}) async {
-    for (int i = 0; i < _apiServers.length; i++) {
-      final url = '${_apiServers[_currentServerIndex]}/$path';
-      try {
-        final response = await _dio.get(url, queryParameters: queryParameters);
-        if (response.statusCode == 200) {
-          return response;
-        }
-      } catch (e) {
-        debugPrint('Server ${_apiServers[_currentServerIndex]} failed: $e');
-        _currentServerIndex = (_currentServerIndex + 1) % _apiServers.length;
-        await Future.delayed(const Duration(seconds: 1));
-      }
+    final url = '$_apiServer/$path';
+    final response = await _dio.get(url, queryParameters: queryParameters);
+    if (response.statusCode == 200) {
+      return response;
     }
-    throw Exception('All servers failed');
+    throw Exception('Server returned status ${response.statusCode}');
   }
 
   Future<List<Station>> _loadFromApiAndCache() async {
