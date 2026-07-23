@@ -50,8 +50,8 @@ class PlayerService extends ChangeNotifier {
   /// 初始化播放器：根据后台服务是否可用选择模式。
   void _initPlayer() {
     if (hasBackgroundService) {
-      // 后台模式：监听 audio_service 状态流。
-      _playbackStateSubscription = AudioService.playbackStateStream.listen((state) {
+      // 后台模式：直接监听后台服务的 playbackState 流，不使用 AudioService 静态方法（避免 _audioHandler 未初始化错误）。
+      _playbackStateSubscription = _backgroundService!.playbackState.listen((state) {
         _isPlaying = state.playing;
         _isBuffering =
             state.processingState == AudioProcessingState.buffering ||
@@ -182,7 +182,7 @@ class PlayerService extends ChangeNotifier {
   /// 播放位置流。
   Stream<Duration?> get positionStream {
     if (hasBackgroundService) {
-      return AudioService.positionStream;
+      return _backgroundService!.playbackState.map((state) => state.updatePosition);
     }
     return _fallbackPlayer?.positionStream ?? Stream.value(null);
   }
