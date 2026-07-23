@@ -35,17 +35,16 @@ void main() async {
     androidNotificationOngoing: true,
   );
 
-  await AudioService.init(
+  final handler = await AudioService.init(
     builder: () => AudioBackgroundService(),
     config: const AudioServiceConfig(
       androidNotificationChannelId: AppConstants.audioNotificationChannelId,
       androidNotificationChannelName: AppConstants.audioNotificationChannelName,
       androidNotificationOngoing: true,
-      androidStopForegroundOnPause: false,
     ),
   );
 
-  audioBackgroundService = AudioService.instance as AudioBackgroundService;
+  audioBackgroundService = handler as AudioBackgroundService;
 
   runApp(const MyApp());
 }
