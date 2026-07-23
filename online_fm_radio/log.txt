@@ -4,9 +4,9 @@ Upgrading gradle.properties
 9
 Upgrading gradle.properties
 10
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-11
 Running Gradle task 'assembleRelease'...                        
+11
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
 12
 Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 13
@@ -30,52 +30,94 @@ If you don't see a plugins block, your project was likely created with an older 
 22
 
 23
-lib/core/services/favorites_service.dart:34:9: Error: This expression has type 'void' and can't be used.
+lib/core/services/audio_background_service.dart:11:3: Error: Type 'StreamSubscription' not found.
 24
-    if (existed) {
+  StreamSubscription<PlayerState>? _playerStateSubscription;
 25
-        ^
+  ^^^^^^^^^^^^^^^^^^
 26
-lib/features/home/home_page.dart:117:11: Error: Final variable 'stations' might already be assigned at this point.
+lib/main.dart:48:41: Error: Member not found: 'instance'.
 27
-          stations = _allStations
+  audioBackgroundService = AudioService.instance as AudioBackgroundService;
 28
-          ^^^^^^^^
+                                        ^^^^^^^^
 29
-Target kernel_snapshot_program failed: Exception
+lib/core/services/audio_background_service.dart:11:3: Error: 'StreamSubscription' isn't a type.
 30
-
+  StreamSubscription<PlayerState>? _playerStateSubscription;
 31
-
+  ^^^^^^^^^^^^^^^^^^
 32
-FAILURE: Build failed with an exception.
+lib/core/services/audio_background_service.dart:37:9: Error: No named parameter with the name 'androidCompactActions'.
 33
-
+        androidCompactActions: [0, 1, 2],
 34
-* What went wrong:
+        ^^^^^^^^^^^^^^^^^^^^^
 35
-Execution failed for task ':app:compileFlutterBuildRelease'.
+../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart:238:3: Context: Found this candidate, but the arguments don't match.
 36
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+  PlaybackState({
 37
-
+  ^^^^^^^^^^^^^
 38
-* Try:
+lib/core/services/audio_background_service.dart:157:11: Error: Superclass has no method named 'dispose'.
 39
-> Run with --stacktrace option to get the stack trace.
+    super.dispose();
 40
-> Run with --info or --debug option to get more log output.
+          ^^^^^^^
 41
-> Run with --scan to get full insights.
+lib/core/services/player_service.dart:158:56: Error: Member not found: 'durationStream'.
 42
-> Get more help at https://help.gradle.org.
+  Stream<Duration?> get durationStream => AudioService.durationStream;
 43
-
+                                                       ^^^^^^^^^^^^^^
 44
-BUILD FAILED in 2m 31s
+lib/main.dart:40:19: Error: Constant evaluation error:
 45
-Running Gradle task 'assembleRelease'...                          153.5s
+    config: const AudioServiceConfig(
 46
-Gradle task assembleRelease failed with exit code 1
+                  ^
 47
+../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart:3525:39: Context: This assertion failed with message: The androidNotificationOngoing will make no effect with androidStopForegroundOnPause set to false
+48
+          !androidNotificationOngoing || androidStopForegroundOnPause,
+49
+                                      ^
+50
+Target kernel_snapshot_program failed: Exception
+51
+
+52
+
+53
+FAILURE: Build failed with an exception.
+54
+
+55
+* What went wrong:
+56
+Execution failed for task ':app:compileFlutterBuildRelease'.
+57
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+58
+
+59
+* Try:
+60
+> Run with --stacktrace option to get the stack trace.
+61
+> Run with --info or --debug option to get more log output.
+62
+> Run with --scan to get full insights.
+63
+> Get more help at https://help.gradle.org.
+64
+
+65
+BUILD FAILED in 2m 41s
+66
+Running Gradle task 'assembleRelease'...                          163.4s
+67
+Gradle task assembleRelease failed with exit code 1
+68
 Error: Process completed with exit code 1.
