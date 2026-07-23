@@ -6,9 +6,9 @@ Upgrading gradle.properties
 9
 Upgrading gradle.properties
 10
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-11
 Running Gradle task 'assembleRelease'...                        
+11
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
 12
 Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 13
@@ -32,52 +32,56 @@ If you don't see a plugins block, your project was likely created with an older 
 22
 
 23
-lib/core/services/favorites_service.dart:34:9: Error: This expression has type 'void' and can't be used.
+lib/core/services/audio_handler.dart:119:15: Error: The method 'add' isn't defined for the type 'MediaItem'.
 24
-    if (existed) {
+ - 'MediaItem' is from 'package:audio_service/audio_service.dart' ('../../../../.pub-cache/hosted/pub.dev/audio_service-0.18.19/lib/audio_service.dart').
 25
-        ^
+Try correcting the name to the name of an existing method, or defining a method named 'add'.
 26
-lib/features/home/home_page.dart:117:11: Error: Final variable 'stations' might already be assigned at this point.
+    mediaItem.add(mediaItem);
 27
-          stations = _allStations
+              ^^^
 28
-          ^^^^^^^^
+lib/core/services/audio_handler.dart:160:17: Error: Superclass has no method named 'dispose'.
 29
-Target kernel_snapshot_program failed: Exception
+    await super.dispose();
 30
-
+                ^^^^^^^
 31
-
+Target kernel_snapshot_program failed: Exception
 32
-FAILURE: Build failed with an exception.
+
 33
 
 34
-* What went wrong:
+FAILURE: Build failed with an exception.
 35
-Execution failed for task ':app:compileFlutterBuildRelease'.
+
 36
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+* What went wrong:
 37
-
+Execution failed for task ':app:compileFlutterBuildRelease'.
 38
-* Try:
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 39
-> Run with --stacktrace option to get the stack trace.
-40
-> Run with --info or --debug option to get more log output.
-41
-> Run with --scan to get full insights.
-42
-> Get more help at https://help.gradle.org.
-43
 
+40
+* Try:
+41
+> Run with --stacktrace option to get the stack trace.
+42
+> Run with --info or --debug option to get more log output.
+43
+> Run with --scan to get full insights.
 44
-BUILD FAILED in 2m 29s
+> Get more help at https://help.gradle.org.
 45
-Running Gradle task 'assembleRelease'...                          151.2s
+
 46
-Gradle task assembleRelease failed with exit code 1
+BUILD FAILED in 2m 21s
 47
+Running Gradle task 'assembleRelease'...                          142.9s
+48
+Gradle task assembleRelease failed with exit code 1
+49
 Error: Process completed with exit code 1.

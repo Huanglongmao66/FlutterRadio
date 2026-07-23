@@ -116,7 +116,7 @@ class RadioAudioHandler extends BaseAudioHandler {
   Future<void> playStation(Station station) async {
     final mediaItem = _stationToMediaItem(station);
     _currentMediaItem = mediaItem;
-    mediaItem.add(mediaItem);
+    this.mediaItem.add(mediaItem);
 
     try {
       await _player.setUrl(station.streamUrl);
@@ -154,9 +154,8 @@ class RadioAudioHandler extends BaseAudioHandler {
   @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
 
-  @override
+  /// 释放 just_audio 播放器资源。
   Future<void> dispose() async {
     await _player.dispose();
-    await super.dispose();
   }
 }
