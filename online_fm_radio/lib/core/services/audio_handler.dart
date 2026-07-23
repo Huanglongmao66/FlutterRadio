@@ -13,20 +13,17 @@ import 'package:online_fm_radio/data/models/station.dart';
 /// - 线控耳机按键
 /// - 蓝牙耳机媒体控制
 /// - 通知栏媒体控制
-/// - 点击通知跳转播放页
 class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
   final AudioPlayer _player = AudioPlayerSingleton.instance;
 
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<PlaybackEvent>? _playbackEventSub;
-  StreamSubscription<int?>? _currentIndexSub;
 
   final List<Station> _stationQueue = [];
   int _currentIndex = -1;
   final StreamController<int> _indexController = StreamController<int>.broadcast();
 
   Stream<int> get currentIndexStream => _indexController.stream;
-
   int get currentIndex => _currentIndex;
 
   Station? get currentStation =>
@@ -34,7 +31,7 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
           ? _stationQueue[_currentIndex]
           : null;
 
-  List<Station> get queue => List.unmodifiable(_stationQueue);
+  List<Station> get stationQueue => List.unmodifiable(_stationQueue);
 
   RadioAudioHandler() {
     _init();
@@ -51,12 +48,12 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
           MediaControl.skipToNext,
         ],
         systemActions: const {
-          MediaAction.seekTo,
           MediaAction.playPause,
           MediaAction.stop,
           MediaAction.skipToNext,
           MediaAction.skipToPrevious,
-          MediaAction.setRating,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
         },
         androidCompactActionIndices: const [0, 1, 4],
         processingState: _mapProcessingState(state.processingState),
@@ -71,16 +68,6 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
     _playbackEventSub = _player.playbackEventStream.listen((event) {
       if (event.processingState == ProcessingState.completed) {
         stop();
-      }
-    });
-
-    _currentIndexSub = _player.currentIndexStream.listen((index) {
-      if (index != null && index != _currentIndex && _stationQueue.isNotEmpty) {
-        _currentIndex = index;
-        _indexController.add(index);
-        if (index < _stationQueue.length) {
-          _updateMediaItemFromStation(_stationQueue[index]);
-        }
       }
     });
   }
@@ -100,48 +87,49 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
     }
   }
 
+  /// 更新通知栏展示的媒体信息。
   void setStationMediaItem(Station station) {
-    _updateMediaItemFromStation(station);
+    final item = _stationToMediaItem(station);
+    mediaItem.add(item);
   }
 
+  /// 设置播放队列，支持线控/蓝牙切台。
   void setPlayQueue(List<Station> stations, int startIndex) {
     _stationQueue.clear();
     _stationQueue.addAll(stations);
     _currentIndex = startIndex;
     _indexController.add(startIndex);
 
-    final queueItems = stations
-        .asMap()
-        .entries
-        .map((e) => _stationToMediaItem(e.value, e.key))
-        .toList();
-    this.queue.add(queueItems);
+    final queueItems = stations.map(_stationToMediaItem).toList();
+    queue.add(queueItems);
 
     if (startIndex >= 0 && startIndex < stations.length) {
-      _updateMediaItemFromStation(stations[startIndex]);
+      setStationMediaItem(stations[startIndex]);
     }
   }
 
+  /// 追加到队列末尾。
   void appendToQueue(Station station) {
     _stationQueue.add(station);
-    final newQueue = List<MediaItem>.from(this.queue.value)
-      ..add(_stationToMediaItem(station, _stationQueue.length - 1));
-    this.queue.add(newQueue);
+    final newQueue = List<MediaItem>.from(queue.value)
+      ..add(_stationToMediaItem(station));
+    queue.add(newQueue);
   }
 
+  /// 从队列中移除指定位置。
   void removeFromQueue(int index) {
     if (index < 0 || index >= _stationQueue.length) return;
     _stationQueue.removeAt(index);
-    final newQueue = List<MediaItem>.from(this.queue.value)..removeAt(index);
-    this.queue.add(newQueue);
+    final newQueue = List<MediaItem>.from(queue.value)..removeAt(index);
+    queue.add(newQueue);
     if (index < _currentIndex) {
       _currentIndex--;
       _indexController.add(_currentIndex);
     }
   }
 
-  void _updateMediaItemFromStation(Station station) {
-    final mediaItem = MediaItem(
+  MediaItem _stationToMediaItem(Station station) {
+    return MediaItem(
       id: station.id,
       album: station.country,
       title: station.name,
@@ -160,22 +148,9 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
         'codec': station.codec,
       },
     );
-    mediaItem.add(mediaItem);
   }
 
-  MediaItem _stationToMediaItem(Station station, int index) {
-    return MediaItem(
-      id: station.id,
-      album: station.country,
-      title: station.name,
-      artist: station.country,
-      genre: station.category,
-      artUri: station.safeLogo.isNotEmpty ? Uri.tryParse(station.safeLogo) : null,
-      displayDescription: station.description,
-      duration: Duration.zero,
-      playable: true,
-    );
-  }
+  // ===== audio_service 控制接口 =====
 
   @override
   Future<void> play() => _player.play();
@@ -223,11 +198,11 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
     final station = _stationQueue[index];
     _currentIndex = index;
     _indexController.add(index);
-    _updateMediaItemFromStation(station);
+    setStationMediaItem(station);
     try {
       await _player.setUrl(station.streamUrl);
       await _player.play();
-    } catch (e) {
+    } catch (_) {
       // 错误由 PlayerService 处理
     }
   }
@@ -261,7 +236,6 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
   Future<void> dispose() async {
     _playerStateSub?.cancel();
     _playbackEventSub?.cancel();
-    _currentIndexSub?.cancel();
     _indexController.close();
   }
 }
