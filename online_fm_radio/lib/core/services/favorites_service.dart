@@ -30,9 +30,8 @@ class FavoritesService extends ChangeNotifier {
   }
 
   Future<void> removeFavorite(Station station) async {
-    final existed = _favorites.any((s) => s.id == station.id);
+    final existed = _favorites.removeWhere((s) => s.id == station.id);
     if (existed) {
-      _favorites.removeWhere((s) => s.id == station.id);
       await _save();
       notifyListeners();
     }

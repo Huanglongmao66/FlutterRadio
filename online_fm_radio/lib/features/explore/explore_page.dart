@@ -181,40 +181,31 @@ class _ExplorePageState extends State<ExplorePage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
+              child: CachedNetworkImage(
+                imageUrl: station.logo,
                 width: 100,
                 height: 100,
-                child: (station.logo.isNotEmpty &&
-                        (station.logo.startsWith('http://') ||
-                            station.logo.startsWith('https://')))
-                    ? CachedNetworkImage(
-                        imageUrl: station.logo,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.radio,
-                            size: 36,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.radio,
-                            size: 36,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.radio,
-                          size: 36,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 100,
+                  height: 100,
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.radio,
+                    size: 36,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 100,
+                  height: 100,
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.radio,
+                    size: 36,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 6),

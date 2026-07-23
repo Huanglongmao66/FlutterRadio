@@ -105,11 +105,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
 
     try {
-      List<Station> stations;
+      final List<Station> stations;
       if (country == null || country.isEmpty) {
+        // 未选国家：取全量缓存前 50 条。
         stations = _allStations.take(50).toList();
       } else {
+        // 已选国家：优先走 API 按国家名精确拉取，覆盖更广。
         stations = await _repository.loadByCountryName(country);
+        // API 无结果时回退到本地缓存中匹配该国家的电台。
         if (stations.isEmpty) {
           stations = _allStations
               .where((s) => s.country == country)
@@ -312,40 +315,31 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
+              child: CachedNetworkImage(
+                imageUrl: station.logo,
                 width: 72,
                 height: 72,
-                child: (station.logo.isNotEmpty &&
-                        (station.logo.startsWith('http://') ||
-                            station.logo.startsWith('https://')))
-                    ? CachedNetworkImage(
-                        imageUrl: station.logo,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.radio,
-                            size: 28,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.radio,
-                            size: 28,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.radio,
-                          size: 28,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 72,
+                  height: 72,
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.radio,
+                    size: 28,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 72,
+                  height: 72,
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.radio,
+                    size: 28,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 6),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/constants/app_constants.dart';
-import 'package:online_fm_radio/core/services/audio_background_service.dart';
 import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
@@ -24,15 +23,7 @@ import 'package:online_fm_radio/features/languages/language_stations_page.dart';
 import 'package:online_fm_radio/features/tags/tag_list_page.dart';
 import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // 后台音频服务初始化（失败时降级为前台播放，不阻塞应用启动）。
-  audioBackgroundService = await initAudioBackgroundService(
-    channelId: AppConstants.audioNotificationChannelId,
-    channelName: AppConstants.audioNotificationChannelName,
-  );
-
+void main() {
   runApp(const MyApp());
 }
 

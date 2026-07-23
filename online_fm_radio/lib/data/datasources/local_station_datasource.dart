@@ -17,11 +17,8 @@ class LocalStationDatasource {
   ];
 
   static const int _pageSize = 30;
-  static const int _batchSize = 1000;
+  static const int _batchSize = 200;
   static const int _maxStations = 10000;
-
-  /// 并行拉取的批次数（同时发起的请求数），避免给 API 服务器过大压力。
-  static const int _parallelBatches = 3;
 
   final Dio _dio;
   final StationCacheService _cacheService;
@@ -31,8 +28,8 @@ class LocalStationDatasource {
     Dio? dio,
     StationCacheService? cacheService,
   })  : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 6),
-          receiveTimeout: const Duration(seconds: 10),
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
         )),
         _cacheService = cacheService ?? StationCacheService();
 
@@ -71,34 +68,32 @@ class LocalStationDatasource {
 
   Future<int> fetchAllAndCache({void Function(int fetched, int total)? onProgress}) async {
     final allStations = <Station>[];
-    final totalBatches = (_maxStations / _batchSize).ceil();
+    int offset = 0;
 
-    // 按组分批并行拉取：每组同时发起 _parallelBatches 个请求，组内并行、组间串行。
-    // 相比纯串行可减少约 2/3 的总耗时，同时避免一次性发起过多请求压垮服务器。
-    for (int groupStart = 0; groupStart < totalBatches; groupStart += _parallelBatches) {
-      final groupEnd = (groupStart + _parallelBatches).clamp(0, totalBatches);
-      final futures = <Future<List<Station>>>[];
+    while (offset < _maxStations) {
+      try {
+        final response = await _request('stations', queryParameters: {
+          'limit': _batchSize,
+          'offset': offset,
+          'order': 'votes',
+          'reverse': 'true',
+        });
 
-      for (int i = groupStart; i < groupEnd; i++) {
-        final offset = i * _batchSize;
-        futures.add(_fetchBatch(offset));
-      }
+        final List<dynamic> jsonData = response.data as List<dynamic>;
+        if (jsonData.isEmpty) break;
 
-      final results = await Future.wait(futures);
+        final batch = jsonData
+            .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+            .where((station) => station.streamUrl.isNotEmpty)
+            .toList();
 
-      var groupEmpty = true;
-      for (final batch in results) {
-        if (batch.isNotEmpty) groupEmpty = false;
         allStations.addAll(batch);
         onProgress?.call(allStations.length, _maxStations);
-      }
 
-      // 组内全部为空表示已无更多数据，提前结束。
-      if (groupEmpty) break;
-
-      // 达到上限则停止。
-      if (allStations.length >= _maxStations) {
-        allStations.removeRange(_maxStations, allStations.length);
+        if (jsonData.length < _batchSize) break;
+        offset += _batchSize;
+      } catch (e) {
+        debugPrint('Failed to fetch batch at offset $offset: $e');
         break;
       }
     }
@@ -107,28 +102,6 @@ class LocalStationDatasource {
       await _cacheService.cacheStations(allStations, 1);
     }
     return allStations.length;
-  }
-
-  /// 拉取单批电台数据（offset 起 _batchSize 条）。
-  Future<List<Station>> _fetchBatch(int offset) async {
-    try {
-      final response = await _request('stations', queryParameters: {
-        'limit': _batchSize,
-        'offset': offset,
-        'order': 'votes',
-        'reverse': 'true',
-        'hidebroken': 'true',
-      });
-
-      final List<dynamic> jsonData = response.data as List<dynamic>;
-      return jsonData
-          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
-          .where((station) => station.streamUrl.isNotEmpty)
-          .toList();
-    } catch (e) {
-      debugPrint('Failed to fetch batch at offset $offset: $e');
-      return [];
-    }
   }
 
   Future<Response> _request(String path, {Map<String, dynamic>? queryParameters}) async {
@@ -142,8 +115,7 @@ class LocalStationDatasource {
       } catch (e) {
         debugPrint('Server ${_apiServers[_currentServerIndex]} failed: $e');
         _currentServerIndex = (_currentServerIndex + 1) % _apiServers.length;
-        // 缩短切换服务器等待时间，加快失败重试。
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(const Duration(seconds: 1));
       }
     }
     throw Exception('All servers failed');
