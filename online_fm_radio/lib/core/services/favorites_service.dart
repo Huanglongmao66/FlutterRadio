@@ -1,35 +1,38 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavoritesService extends ChangeNotifier {
   static const String _storageKey = 'favorites';
-  final List<String> _favoriteIds = [];
+  final List<Station> _favorites = [];
+
+  List<Station> get favorites => List.unmodifiable(_favorites);
+
+  /// Backwards-compatible list of favorite station ids.
+  List<String> get favoriteIds =>
+      _favorites.map((s) => s.id).toList(growable: false);
 
   bool isFavorite(Station station) {
-    return _favoriteIds.contains(station.id);
+    return _favorites.any((s) => s.id == station.id);
   }
 
-  List<String> get favoriteIds => List.unmodifiable(_favoriteIds);
-
   Future<void> toggleFavorite(Station station) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (_favoriteIds.contains(station.id)) {
-      _favoriteIds.remove(station.id);
+    final existing = _favorites.indexWhere((s) => s.id == station.id);
+    if (existing >= 0) {
+      _favorites.removeAt(existing);
     } else {
-      _favoriteIds.add(station.id);
+      _favorites.insert(0, station);
     }
-
-    await prefs.setStringList(_storageKey, _favoriteIds);
+    await _save();
     notifyListeners();
   }
 
   Future<void> removeFavorite(Station station) async {
-    if (_favoriteIds.contains(station.id)) {
-      _favoriteIds.remove(station.id);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_storageKey, _favoriteIds);
+    final existed = _favorites.removeWhere((s) => s.id == station.id);
+    if (existed) {
+      await _save();
       notifyListeners();
     }
   }
@@ -37,18 +40,28 @@ class FavoritesService extends ChangeNotifier {
   Future<void> loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getStringList(_storageKey);
-
     if (stored != null) {
-      _favoriteIds.clear();
-      _favoriteIds.addAll(stored);
+      _favorites.clear();
+      for (final jsonString in stored) {
+        try {
+          final map = jsonDecode(jsonString) as Map<String, dynamic>;
+          _favorites.add(Station.fromJson(map));
+        } catch (_) {}
+      }
       notifyListeners();
     }
   }
 
   Future<void> clearAll() async {
-    _favoriteIds.clear();
+    _favorites.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_storageKey);
     notifyListeners();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStrings = _favorites.map((s) => jsonEncode(s.toJson())).toList();
+    await prefs.setStringList(_storageKey, jsonStrings);
   }
 }

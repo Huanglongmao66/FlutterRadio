@@ -44,7 +44,9 @@ class MyApp extends StatelessWidget {
           create: (_) => HistoryService()..loadHistory(),
         ),
         ChangeNotifierProvider<PlayerService>(
-          create: (_) => PlayerService(),
+          create: (context) => PlayerService(
+            historyService: context.read<HistoryService>(),
+          ),
         ),
         ChangeNotifierProvider<SleepTimerService>(
           create: (_) => SleepTimerService(),

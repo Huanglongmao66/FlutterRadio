@@ -26,6 +26,14 @@ class StationRepository {
     return await _datasource.loadByCountry(countryCode);
   }
 
+  Future<List<Station>> loadByCountryName(String countryName) async {
+    return await _datasource.loadByCountryName(countryName);
+  }
+
+  Future<List<Station>> loadNewestStations({int limit = 20}) async {
+    return await _datasource.loadNewestStations(limit: limit);
+  }
+
   Future<List<Station>> search(String keyword) async {
     if (keyword.length >= 2) {
       return await _datasource.searchStations(keyword);

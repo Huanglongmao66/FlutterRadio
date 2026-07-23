@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,9 +43,7 @@ class HistoryService extends ChangeNotifier {
       _history.clear();
       for (final jsonString in stored) {
         try {
-          final map = Map<String, dynamic>.from(
-            _decodeJsonString(jsonString),
-          );
+          final map = jsonDecode(jsonString) as Map<String, dynamic>;
           _history.add(Station.fromJson(map));
         } catch (_) {}
       }
@@ -53,29 +53,7 @@ class HistoryService extends ChangeNotifier {
 
   Future<void> _saveHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonStrings = _history.map((s) => _encodeStation(s)).toList();
+    final jsonStrings = _history.map((s) => jsonEncode(s.toJson())).toList();
     await prefs.setStringList(_storageKey, jsonStrings);
-  }
-
-  String _encodeStation(Station station) {
-    final json = station.toJson();
-    return Uri.encodeComponent(
-      json.entries.map((e) => '${e.key}=${e.value}').join('&'),
-    );
-  }
-
-  Map<String, dynamic> _decodeJsonString(String encoded) {
-    final decoded = Uri.decodeComponent(encoded);
-    final parts = decoded.split('&');
-    final map = <String, dynamic>{};
-
-    for (final part in parts) {
-      final keyValue = part.split('=');
-      if (keyValue.length == 2) {
-        map[keyValue[0]] = keyValue[1];
-      }
-    }
-
-    return map;
   }
 }

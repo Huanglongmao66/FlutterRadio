@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
 class PlayerService extends ChangeNotifier {
@@ -16,13 +17,17 @@ class PlayerService extends ChangeNotifier {
   double _volume = 0.5;
   static const int _maxRetryCount = 3;
 
+  /// Optional history service so every play is recorded in "最近播放".
+  final HistoryService? _historyService;
+
   Station? get currentStation => _currentStation;
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
   String? get errorMessage => _errorMessage;
   double get volume => _volume;
 
-  PlayerService() {
+  PlayerService({HistoryService? historyService})
+      : _historyService = historyService {
     _initPlayer();
   }
 
@@ -47,6 +52,10 @@ class PlayerService extends ChangeNotifier {
     _currentStation = station;
     _isBuffering = true;
     notifyListeners();
+
+    // Record to play history (最近播放). Fire-and-forget: a failure here
+    // must not block playback.
+    _historyService?.addToHistory(station);
 
     try {
       await _player.setUrl(station.streamUrl);

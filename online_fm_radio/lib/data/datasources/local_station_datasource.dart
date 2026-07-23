@@ -16,7 +16,7 @@ class LocalStationDatasource {
     'http://de1.api.radio-browser.info/json',
   ];
 
-  static const int _pageSize = 20;
+  static const int _pageSize = 30;
   static const int _batchSize = 200;
   static const int _maxStations = 10000;
 
@@ -158,6 +158,52 @@ class LocalStationDatasource {
           .toList();
     } catch (e) {
       debugPrint('Failed to load by country: $e');
+    }
+    return [];
+  }
+
+  /// Load stations whose country name exactly matches [countryName].
+  /// Used by the recommendation page when a country is selected in Settings.
+  Future<List<Station>> loadByCountryName(String countryName) async {
+    try {
+      final response = await _request(
+        'stations/bycountryexact/${Uri.encodeComponent(countryName)}',
+        queryParameters: {
+          'limit': 50,
+          'order': 'votes',
+          'reverse': 'true',
+          'hidebroken': 'true',
+        },
+      );
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      return jsonData
+          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+          .where((station) => station.streamUrl.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load by country name: $e');
+    }
+    return [];
+  }
+
+  /// Load the most recently active/added stations (newest first).
+  Future<List<Station>> loadNewestStations({int limit = 20}) async {
+    try {
+      final response = await _request('stations', queryParameters: {
+        'limit': limit,
+        'order': 'lastchecktime',
+        'reverse': 'true',
+        'hidebroken': 'true',
+      });
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      return jsonData
+          .map((json) => Station.fromRadioBrowserJson(json as Map<String, dynamic>))
+          .where((station) => station.streamUrl.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Failed to load newest stations: $e');
     }
     return [];
   }
