@@ -28,18 +28,27 @@ import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化 audio_service：启动前台媒体播放服务，
-  // 保证 App 进入后台后音频可持续播放，并在通知栏/锁屏显示控制组件。
-  final audioHandler = await AudioService.init(
-    builder: () => RadioAudioHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.online_fm_radio.channel.audio',
-      androidNotificationChannelName: 'Online FM Radio',
-      androidNotificationOngoing: true,
-      androidShowNotificationBadge: true,
-      notificationColor: Color(0xFF6366F1),
-    ),
-  );
+  RadioAudioHandler audioHandler;
+
+  try {
+    // 初始化 audio_service：启动前台媒体播放服务，
+    // 保证 App 进入后台后音频可持续播放，并在通知栏/锁屏显示控制组件。
+    audioHandler = await AudioService.init(
+      builder: () => RadioAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.example.online_fm_radio.channel.audio',
+        androidNotificationChannelName: 'Online FM Radio',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+        notificationColor: Color(0xFF6366F1),
+      ),
+    );
+  } catch (e) {
+    // audio_service 初始化失败时，使用 fallback handler
+    // App 仍可启动，但无后台播放和通知栏控制功能
+    debugPrint('audio_service init failed: $e');
+    audioHandler = RadioAudioHandler();
+  }
 
   runApp(MyApp(audioHandler: audioHandler));
 }

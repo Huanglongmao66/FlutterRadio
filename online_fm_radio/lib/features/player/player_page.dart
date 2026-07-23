@@ -513,80 +513,81 @@ class _PlayerPageState extends State<PlayerPage> {
                   Expanded(
                     child: Consumer<HistoryService>(
                       builder: (context, service, child) {
-                      final history = service.history;
-                      if (history.isEmpty) {
-                        return Center(
-                          child: Text(
-                            '暂无播放记录',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 14,
-                            ),
-                          ),
-                        );
-                      }
-                      return ListView.builder(
-                        controller: scrollController,
-                        itemCount: history.length,
-                        itemBuilder: (context, index) {
-                          final station = history[index];
-                          final isPlaying = playerService
-                                  .currentStation?.id ==
-                              station.id;
-                          return ListTile(
-                            leading: ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(8),
-                              child: CachedNetworkImage(
-                                imageUrl: station.logo,
-                                width: 44,
-                                height: 44,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) =>
-                                    Container(
-                                  width: 44,
-                                  height: 44,
-                                  color: Colors.white10,
-                                  child: const Icon(Icons.radio,
-                                      size: 22,
-                                      color: Colors.white54),
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              station.name,
-                              style: TextStyle(
-                                color: isPlaying
-                                    ? const Color(0xFF6366F1)
-                                    : Colors.white,
-                                fontWeight: isPlaying
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text(
-                              station.country,
+                        final history = service.history;
+                        if (history.isEmpty) {
+                          return Center(
+                            child: Text(
+                              '暂无播放记录',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.5),
-                                fontSize: 12,
+                                fontSize: 14,
                               ),
                             ),
-                            trailing: isPlaying
-                                ? const Icon(
-                                    Icons.play_arrow,
-                                    color: Color(0xFF6366F1),
-                                  )
-                                : null,
-                            onTap: () {
-                              playerService.play(station);
-                              Navigator.pop(context);
-                            },
                           );
-                        },
-                      );
-                    },
+                        }
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: history.length,
+                          itemBuilder: (context, index) {
+                            final station = history[index];
+                            final isPlaying = playerService
+                                    .currentStation?.id ==
+                                station.id;
+                            return ListTile(
+                              leading: ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(8),
+                                child: CachedNetworkImage(
+                                  imageUrl: station.logo,
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) =>
+                                      Container(
+                                    width: 44,
+                                    height: 44,
+                                    color: Colors.white10,
+                                    child: const Icon(Icons.radio,
+                                        size: 22,
+                                        color: Colors.white54),
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                station.name,
+                                style: TextStyle(
+                                  color: isPlaying
+                                      ? const Color(0xFF6366F1)
+                                      : Colors.white,
+                                  fontWeight: isPlaying
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                station.country,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing: isPlaying
+                                  ? const Icon(
+                                      Icons.play_arrow,
+                                      color: Color(0xFF6366F1),
+                                    )
+                                  : null,
+                              onTap: () {
+                                playerService.play(station);
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
