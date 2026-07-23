@@ -4,6 +4,7 @@ import 'package:online_fm_radio/features/home/home_page.dart';
 import 'package:online_fm_radio/features/explore/explore_page.dart';
 import 'package:online_fm_radio/features/favorites/favorites_page.dart';
 import 'package:online_fm_radio/features/profile/profile_page.dart';
+import 'package:online_fm_radio/shared/components/mini_player_bar.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -32,9 +33,16 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Persistent mini player; only renders when a station is playing.
+          const MiniPlayerBar(),
+          AppBottomNavigation(
+            currentIndex: _currentIndex,
+            onTap: _onTabTapped,
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/constants/app_constants.dart';
+import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
@@ -33,6 +34,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<CountryPreferenceService>(
+          create: (_) => CountryPreferenceService()..loadCountry(),
+        ),
         ChangeNotifierProvider<FavoritesService>(
           create: (_) => FavoritesService()..loadFavorites(),
         ),

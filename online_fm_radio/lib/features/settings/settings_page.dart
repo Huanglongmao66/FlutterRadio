@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
+import 'package:online_fm_radio/data/models/country.dart';
+import 'package:online_fm_radio/data/repositories/station_repository.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -16,6 +19,7 @@ class SettingsPage extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          _buildCountrySection(context),
           _buildThemeSection(context),
           _buildSleepTimerSection(context),
           _buildDataManagementSection(context),
@@ -23,6 +27,179 @@ class SettingsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildCountrySection(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '国家/地区',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '选中的国家将用于推荐页面筛选电台',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            Consumer<CountryPreferenceService>(
+              builder: (context, service, child) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.public,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: Text(
+                    service.selectedCountry ?? '全部国家',
+                    style: TextStyle(
+                      fontWeight: service.selectedCountry != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  subtitle: Text(
+                    service.selectedCountry != null
+                        ? '已选: ${service.selectedCountry}'
+                        : '未选择，显示全部国家电台',
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => _showCountryPicker(context, service),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCountryPicker(
+    BuildContext context,
+    CountryPreferenceService service,
+  ) async {
+    final repository = StationRepository();
+    List<Country> countries = [];
+
+    try {
+      countries = await repository.loadCountries();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载国家列表失败: $e')),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        String searchKeyword = '';
+        List<Country> filteredCountries = countries;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (searchKeyword.isNotEmpty) {
+              filteredCountries = countries
+                  .where((c) => c.name.toLowerCase().contains(searchKeyword.toLowerCase()))
+                  .toList();
+            } else {
+              filteredCountries = countries;
+            }
+
+            return AlertDialog(
+              title: const Text('选择国家/地区'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => Navigator.pop(context, '__all__'),
+                      icon: const Icon(Icons.public),
+                      label: const Text('全部国家'),
+                    ),
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: '搜索国家...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchKeyword = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 300,
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredCountries.length,
+                        itemBuilder: (context, index) {
+                          final country = filteredCountries[index];
+                          final isSelected = service.selectedCountry == country.name;
+                          return ListTile(
+                            leading: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                              child: Text(
+                                country.countryCode.isNotEmpty
+                                    ? country.countryCode.substring(0, 2).toUpperCase()
+                                    : '?',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              country.name,
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                            ),
+                            trailing: Text('${country.stationCount}'),
+                            onTap: () => Navigator.pop(context, country.name),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text('取消'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      if (result == '__all__') {
+        await service.setCountry(null);
+      } else {
+        await service.setCountry(result);
+      }
+    }
   }
 
   Widget _buildThemeSection(BuildContext context) {
@@ -41,27 +218,15 @@ class SettingsPage extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildThemeButton(
-                    context,
-                    '浅色模式',
-                    Icons.light_mode,
-                  ),
+                  child: _buildThemeButton(context, '浅色模式', Icons.light_mode),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildThemeButton(
-                    context,
-                    '深色模式',
-                    Icons.dark_mode,
-                  ),
+                  child: _buildThemeButton(context, '深色模式', Icons.dark_mode),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildThemeButton(
-                    context,
-                    '跟随系统',
-                    Icons.phone_android,
-                  ),
+                  child: _buildThemeButton(context, '跟随系统', Icons.phone_android),
                 ),
               ],
             ),
@@ -71,11 +236,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-  ) {
+  Widget _buildThemeButton(BuildContext context, String label, IconData icon) {
     return ElevatedButton(
       onPressed: () {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -185,6 +346,7 @@ class SettingsPage extends StatelessWidget {
             Consumer<FavoritesService>(
               builder: (context, favoritesService, child) {
                 return ListTile(
+                  contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.favorite),
                   title: const Text('清空收藏'),
                   subtitle: Text('共 ${favoritesService.favoriteIds.length} 个收藏'),
@@ -199,6 +361,7 @@ class SettingsPage extends StatelessWidget {
             Consumer<HistoryService>(
               builder: (context, historyService, child) {
                 return ListTile(
+                  contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.history),
                   title: const Text('清空播放记录'),
                   subtitle: Text('共 ${historyService.history.length} 条记录'),
@@ -211,6 +374,7 @@ class SettingsPage extends StatelessWidget {
             ),
             const Divider(),
             ListTile(
+              contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.storage),
               title: const Text('清除缓存'),
               subtitle: const Text('清除图片和数据缓存'),
@@ -254,6 +418,7 @@ class SettingsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ListTile(
+              contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.help),
               title: const Text('帮助与反馈'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),

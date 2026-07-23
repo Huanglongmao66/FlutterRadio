@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
 import 'package:online_fm_radio/data/models/country.dart';
@@ -23,12 +25,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   List<Language> _languages = [];
   String? _selectedCountry;
   bool _isLoading = true;
+  CountryPreferenceService? _countryService;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _countryService = context.read<CountryPreferenceService>();
+      _countryService!.addListener(_onCountryPreferenceChanged);
+      // Apply the persisted preference once available.
+      _applyCountryFilter(_countryService!.selectedCountry);
+    });
+  }
+
+  void _onCountryPreferenceChanged() {
+    _applyCountryFilter(_countryService?.selectedCountry);
   }
 
   Future<void> _loadData() async {
@@ -49,28 +62,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _loadRecommendedStations() async {
     try {
       _allStations = await _repository.loadStations();
-      _applyCountryFilter();
+      _applyCountryFilter(_countryService?.selectedCountry);
     } catch (e) {
       debugPrint('Failed to load recommended stations: $e');
     }
   }
 
-  void _applyCountryFilter() {
-    if (_selectedCountry == null || _selectedCountry!.isEmpty) {
-      _recommendedStations = _allStations.take(50).toList();
-    } else {
-      _recommendedStations = _allStations
-          .where((s) => s.country == _selectedCountry)
-          .take(50)
-          .toList();
-    }
-  }
-
-  void _onCountrySelected(String? country) {
+  void _applyCountryFilter(String? country) {
     setState(() {
       _selectedCountry = country;
-      _applyCountryFilter();
+      if (country == null || country.isEmpty) {
+        _recommendedStations = _allStations.take(50).toList();
+      } else {
+        _recommendedStations = _allStations
+            .where((s) => s.country == country)
+            .take(50)
+            .toList();
+      }
     });
+  }
+
+  void _onCountrySelected(String? country) async {
+    // Persist the choice via the service; the listener re-applies the filter.
+    final service = context.read<CountryPreferenceService>();
+    await service.setCountry(country);
   }
 
   Future<void> _loadCountries() async {
@@ -91,6 +106,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
+    _countryService?.removeListener(_onCountryPreferenceChanged);
     _tabController.dispose();
     super.dispose();
   }
