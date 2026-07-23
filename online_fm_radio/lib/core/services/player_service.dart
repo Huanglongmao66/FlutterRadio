@@ -2,12 +2,23 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:online_fm_radio/core/services/audio_handler.dart';
+import 'package:online_fm_radio/core/services/audio_player_singleton.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
+/// 播放器业务服务。
+///
+/// 关键设计：
+/// - 使用全局单例 AudioPlayer（与 RadioAudioHandler 共享）
+/// - 播放时通过 audioHandler 更新通知栏媒体信息
+/// - 自身不创建/销毁 AudioPlayer，避免资源冲突
 class PlayerService extends ChangeNotifier {
-  final AudioPlayer _player = AudioPlayer();
-  StreamSubscription<PlayerState>? _playerStateSubscription;
+  final AudioPlayer _player = AudioPlayerSingleton.instance;
+  final HistoryService? _historyService;
+  final RadioAudioHandler? _audioHandler;
+
+  StreamSubscription<PlayerState>? _playerStateSub;
 
   Station? _currentStation;
   bool _isPlaying = false;
@@ -17,22 +28,22 @@ class PlayerService extends ChangeNotifier {
   double _volume = 0.5;
   static const int _maxRetryCount = 3;
 
-  /// Optional history service so every play is recorded in "最近播放".
-  final HistoryService? _historyService;
-
   Station? get currentStation => _currentStation;
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
   String? get errorMessage => _errorMessage;
   double get volume => _volume;
 
-  PlayerService({HistoryService? historyService})
-      : _historyService = historyService {
-    _initPlayer();
+  PlayerService({
+    HistoryService? historyService,
+    RadioAudioHandler? audioHandler,
+  })  : _historyService = historyService,
+        _audioHandler = audioHandler {
+    _init();
   }
 
-  void _initPlayer() {
-    _playerStateSubscription = _player.playerStateStream.listen((state) {
+  void _init() {
+    _playerStateSub = _player.playerStateStream.listen((state) {
       _isPlaying = state.playing;
       _isBuffering = state.processingState == ProcessingState.buffering;
 
@@ -53,9 +64,11 @@ class PlayerService extends ChangeNotifier {
     _isBuffering = true;
     notifyListeners();
 
-    // Record to play history (最近播放). Fire-and-forget: a failure here
-    // must not block playback.
+    // 写入最近播放历史
     _historyService?.addToHistory(station);
+
+    // 更新通知栏媒体信息
+    _audioHandler?.setStationMediaItem(station);
 
     try {
       await _player.setUrl(station.streamUrl);
@@ -67,7 +80,6 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> pause() async {
     if (!_isPlaying) return;
-
     await _player.pause();
     _isPlaying = false;
     notifyListeners();
@@ -75,7 +87,6 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> resume() async {
     if (_isPlaying || _currentStation == null) return;
-
     await _player.play();
     _isPlaying = true;
     notifyListeners();
@@ -114,7 +125,6 @@ class PlayerService extends ChangeNotifier {
   }
 
   Stream<Duration?> get positionStream => _player.positionStream;
-
   Stream<Duration?> get durationStream => _player.durationStream;
 
   void setVolume(double volume) {
@@ -125,8 +135,8 @@ class PlayerService extends ChangeNotifier {
 
   @override
   void dispose() {
-    _playerStateSubscription?.cancel();
-    _player.dispose();
+    _playerStateSub?.cancel();
+    // 注意：不 dispose _player，因为单例共享
     super.dispose();
   }
 }

@@ -54,7 +54,7 @@ class _PlayerPageState extends State<PlayerPage> {
                       _buildActionIcons(),
                       const SizedBox(height: 24),
                       _buildPlaybackControls(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 48),
                       _buildHistoryHandle(),
                       const SizedBox(height: 8),
                     ],

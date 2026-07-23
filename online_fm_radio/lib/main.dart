@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:online_fm_radio/core/constants/app_constants.dart';
+import 'package:online_fm_radio/core/services/audio_handler.dart';
 import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
@@ -23,12 +25,35 @@ import 'package:online_fm_radio/features/languages/language_stations_page.dart';
 import 'package:online_fm_radio/features/tags/tag_list_page.dart';
 import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  RadioAudioHandler? audioHandler;
+  try {
+    // 初始化 audio_service：启动前台媒体播放服务。
+    // RadioAudioHandler 使用全局单例 AudioPlayer，与 PlayerService 共享，
+    // 避免重复创建导致的网络/资源冲突。
+    audioHandler = await AudioService.init(
+      builder: () => RadioAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.example.online_fm_radio.channel.audio',
+        androidNotificationChannelName: 'Online FM Radio',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+        notificationColor: Color(0xFF6366F1),
+      ),
+    );
+  } catch (e) {
+    debugPrint('audio_service init failed (fallback): $e');
+  }
+
+  runApp(MyApp(audioHandler: audioHandler));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final RadioAudioHandler? audioHandler;
+
+  const MyApp({super.key, this.audioHandler});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +71,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<PlayerService>(
           create: (context) => PlayerService(
             historyService: context.read<HistoryService>(),
+            audioHandler: audioHandler,
           ),
         ),
         ChangeNotifierProvider<SleepTimerService>(
