@@ -120,6 +120,5 @@ class RadioAudioHandler extends BaseAudioHandler {
     _playerStateSub?.cancel();
     _playbackEventSub?.cancel();
     // 注意：不 dispose _player，因为单例共享
-    await super.dispose();
   }
 }

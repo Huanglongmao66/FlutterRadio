@@ -6,37 +6,37 @@ Upgrading gradle.properties
 9
 Upgrading gradle.properties
 10
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-11
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-12
-
-13
-Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
-14
-If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
-15
-
-16
-Warning: Flutter support for your project's Kotlin version (2.0.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
-17
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-18
-
-19
-Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
-20
-If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
-21
-
-22
 Running Gradle task 'assembleRelease'...                        
+11
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+12
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+13
+
+14
+Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
+15
+If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+16
+
+17
+Warning: Flutter support for your project's Kotlin version (2.0.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
+18
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+19
+
+20
+Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
+21
+If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
+22
+
 23
-lib/features/player/player_page.dart:513:27: Error: Can't find ')' to match '('.
+lib/core/services/audio_handler.dart:123:17: Error: Superclass has no method named 'dispose'.
 24
-                  Expanded(
+    await super.dispose();
 25
-                          ^
+                ^^^^^^^
 26
 Target kernel_snapshot_program failed: Exception
 27
@@ -68,9 +68,9 @@ Execution failed for task ':app:compileFlutterBuildRelease'.
 40
 
 41
-BUILD FAILED in 2m 49s
+BUILD FAILED in 2m 43s
 42
-Running Gradle task 'assembleRelease'...                          170.0s
+Running Gradle task 'assembleRelease'...                          164.1s
 43
 Gradle task assembleRelease failed with exit code 1
 44
