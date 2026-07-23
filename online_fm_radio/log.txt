@@ -78,11 +78,11 @@ Upgrading gradle.properties
 45
 Upgrading gradle.properties
 46
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
-47
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-48
 Running Gradle task 'assembleRelease'...                        
+47
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+48
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 49
 
 50
@@ -136,99 +136,99 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 74
 
 75
-lib/features/settings/settings_page.dart:587:44: Error: 'Station' isn't a type.
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 6484 bytes (99.6% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
 76
-    final stationList = stations.whereType<Station>().toList();
+/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
 77
-                                           ^^^^^^^
+    public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
 78
-lib/features/settings/settings_page.dart:597:46: Error: Not a constant expression.
+                                                                                 ^
 79
-              onPressed: () => Navigator.pop(context, 'm3u'),
+  symbol:   class Registrar
 80
-                                             ^^^^^^^
+  location: interface PluginRegistry
 81
-lib/features/settings/settings_page.dart:597:42: Error: Method invocation is not a constant expression.
+/home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
 82
-              onPressed: () => Navigator.pop(context, 'm3u'),
+            final PluginRegistry.Registrar registrar,
 83
-                                         ^^^
+                                ^
 84
-lib/features/settings/settings_page.dart:597:26: Error: Not a constant expression.
+  symbol:   class Registrar
 85
-              onPressed: () => Navigator.pop(context, 'm3u'),
+  location: interface PluginRegistry
 86
-                         ^^
+2 errors
 87
-lib/features/settings/settings_page.dart:601:46: Error: Not a constant expression.
+
 88
-              onPressed: () => Navigator.pop(context, 'm3u8'),
-89
-                                             ^^^^^^^
-90
-lib/features/settings/settings_page.dart:601:42: Error: Method invocation is not a constant expression.
-91
-              onPressed: () => Navigator.pop(context, 'm3u8'),
-92
-                                         ^^^
-93
-lib/features/settings/settings_page.dart:601:26: Error: Not a constant expression.
-94
-              onPressed: () => Navigator.pop(context, 'm3u8'),
-95
-                         ^^
-96
-lib/features/settings/settings_page.dart:605:46: Error: Not a constant expression.
-97
-              onPressed: () => Navigator.pop(context, 'json'),
-98
-                                             ^^^^^^^
-99
-lib/features/settings/settings_page.dart:605:42: Error: Method invocation is not a constant expression.
-100
-              onPressed: () => Navigator.pop(context, 'json'),
-101
-                                         ^^^
-102
-lib/features/settings/settings_page.dart:605:26: Error: Not a constant expression.
-103
-              onPressed: () => Navigator.pop(context, 'json'),
-104
-                         ^^
-105
-Target kernel_snapshot_program failed: Exception
-106
-
-107
-
-108
 FAILURE: Build failed with an exception.
-109
+89
 
-110
+90
 * What went wrong:
-111
-Execution failed for task ':app:compileFlutterBuildRelease'.
-112
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
-113
+91
+Execution failed for task ':file_picker:compileReleaseJavaWithJavac'.
+92
+> Compilation failed; see the compiler output below.
+93
+  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:120: error: cannot find symbol
+94
+      public static void registerWith(final io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
+95
+                                                                                   ^
+96
+    symbol:   class Registrar
+97
+    location: interface PluginRegistry
+98
+  /home/runner/.pub-cache/hosted/pub.dev/file_picker-5.5.0/android/src/main/java/com/mr/flutter/plugin/filepicker/FilePickerPlugin.java:248: error: cannot find symbol
+99
+              final PluginRegistry.Registrar registrar,
+100
+                                  ^
+101
+    symbol:   class Registrar
+102
+    location: interface PluginRegistry
+103
+  2 errors
+104
 
-114
+105
 * Try:
-115
-> Run with --stacktrace option to get the stack trace.
-116
-> Run with --info or --debug option to get more log output.
-117
+106
+> Check your code and dependencies to fix the compilation error(s)
+107
 > Run with --scan to get full insights.
-118
-> Get more help at https://help.gradle.org.
-119
+108
 
+109
+BUILD FAILED in 3m 35s
+110
+Running Gradle task 'assembleRelease'...                          217.4s
+111
+
+112
+┌─ Flutter Fix ───────────────────────────────────────────────────────────────────────────────────┐
+113
+│ [!] Consult the error logs above to identify any broken plugins, specifically those containing  │
+114
+│ "error: cannot find symbol..."                                                                  │
+115
+│ This issue is likely caused by v1 embedding removal and the plugin's continued usage of removed │
+116
+│ references to the v1 embedding.                                                                 │
+117
+│ To fix this error, please upgrade your current package's dependencies to latest versions by     │
+118
+│ running `flutter pub upgrade`.                                                                  │
+119
+│ If that does not work, please file an issue for the problematic plugin(s) here:                 │
 120
-BUILD FAILED in 3m
+│ https://github.com/flutter/flutter/issues                                                       │
 121
-Running Gradle task 'assembleRelease'...                          185.3s
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
 122
 Gradle task assembleRelease failed with exit code 1
 123
