@@ -441,7 +441,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final items = [
       _StatItem(Icons.radio, '本地电台', '$localCount', '/local_stations'),
-      _StatItem(Icons.storage, '缓存电台', '$cachedCount', '/local_stations'),
+      _StatItem(Icons.storage, '缓存电台', '$cachedCount', '/cached_stations'),
       _StatItem(Icons.cloud, '远程电台', '$remoteCount', '/local_stations'),
       _StatItem(Icons.public, '国家', '$countries', '/countries'),
       _StatItem(Icons.language, '语言', '$languages', '/languages'),

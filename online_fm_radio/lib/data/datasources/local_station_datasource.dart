@@ -158,16 +158,18 @@ class LocalStationDatasource {
     bool Function()? shouldStop,
   }) async {
     final totalStations = await _getMaxStations();
-    final allStations = <Station>[];
+    final stationMap = <String, Station>{};
     int offset = resumeOffset;
     int fetchedCount = resumeFetched;
     int cachedCount = 0;
 
-    // 如果是断点续传，先加载已缓存的数据（用于后续合并覆盖）
+    // 如果是断点续传，先加载已缓存的数据
     if (resumeOffset > 0) {
       final existing = await _cacheService.getCachedStations();
-      allStations.addAll(existing);
-      cachedCount = existing.length;
+      for (final station in existing) {
+        stationMap[station.id] = station;
+      }
+      cachedCount = stationMap.length;
     }
 
     // 预计算所有需要请求的 offset 列表
@@ -182,8 +184,8 @@ class LocalStationDatasource {
     while (offsetIndex < offsets.length || pendingFutures.isNotEmpty) {
       // 取消检查
       if (shouldStop != null && shouldStop()) {
-        if (allStations.isNotEmpty) {
-          await _cacheService.cacheStations(allStations, 1);
+        if (stationMap.isNotEmpty) {
+          await _cacheService.cacheStations(stationMap.values.toList(), 1);
         }
         return fetchedCount;
       }
@@ -212,9 +214,13 @@ class LocalStationDatasource {
         final completed = await Future.any(pendingFutures);
         pendingFutures.remove(completed);
 
-        // 处理完成的批次
-        allStations.addAll(completed.stations);
-        fetchedCount += completed.stations.length;
+        // 处理完成的批次：去重添加
+        final newCountBefore = stationMap.length;
+        for (final station in completed.stations) {
+          stationMap[station.id] = station;
+        }
+        final newAdded = stationMap.length - newCountBefore;
+        fetchedCount += newAdded;
         onProgress?.call(fetchedCount, totalStations);
 
         // 保存断点位置
@@ -222,16 +228,16 @@ class LocalStationDatasource {
         onBatchSaved?.call(nextOffset, fetchedCount, totalStations);
 
         // 分块缓存：每积累一定数量后立即缓存
-        if (allStations.length - cachedCount >= _cacheChunkSize) {
-          await _cacheService.cacheStations(allStations, 1);
-          cachedCount = allStations.length;
+        if (stationMap.length - cachedCount >= _cacheChunkSize) {
+          await _cacheService.cacheStations(stationMap.values.toList(), 1);
+          cachedCount = stationMap.length;
         }
       }
     }
 
     // 最终缓存
-    if (allStations.isNotEmpty && cachedCount != allStations.length) {
-      await _cacheService.cacheStations(allStations, 1);
+    if (stationMap.isNotEmpty && cachedCount != stationMap.length) {
+      await _cacheService.cacheStations(stationMap.values.toList(), 1);
     }
 
     return fetchedCount;

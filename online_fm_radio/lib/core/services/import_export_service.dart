@@ -130,10 +130,12 @@ class ImportExportService {
       extension = 'json';
     }
 
+    final bytes = utf8.encode(content);
     final result = await FilePicker.platform.saveFile(
       dialogTitle: '导出电台列表',
       fileName: 'radio_stations.$extension',
       allowedExtensions: [extension],
+      bytes: bytes,
     );
 
     if (result != null) {
@@ -324,11 +326,13 @@ class ImportExportService {
     // 生成文件名（包含筛选条件信息）
     final fileName = _generateFileName(filter, format);
     final content = _generateContent(stations, format);
+    final bytes = utf8.encode(content);
 
     final result = await FilePicker.platform.saveFile(
       dialogTitle: '导出电台数据',
       fileName: fileName,
       allowedExtensions: [format],
+      bytes: bytes,
     );
 
     if (result != null) {
@@ -379,11 +383,13 @@ class ImportExportService {
     final content = _generateContent(stations, format);
     final timestamp = DateTime.now().toIso8601String().split('T')[0];
     final fileName = 'all_stations_${stations.length}_$timestamp.$format';
+    final bytes = utf8.encode(content);
 
     final result = await FilePicker.platform.saveFile(
       dialogTitle: '一键导出全部缓存电台',
       fileName: fileName,
       allowedExtensions: [format],
+      bytes: bytes,
     );
 
     if (result != null) {

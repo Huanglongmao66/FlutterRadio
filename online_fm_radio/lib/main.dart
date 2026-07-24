@@ -25,6 +25,7 @@ import 'package:online_fm_radio/features/countries/country_list_page.dart';
 import 'package:online_fm_radio/features/countries/country_stations_page.dart';
 import 'package:online_fm_radio/features/languages/language_list_page.dart';
 import 'package:online_fm_radio/features/languages/language_stations_page.dart';
+import 'package:online_fm_radio/features/stations/cached_stations_page.dart';
 import 'package:online_fm_radio/features/stations/local_stations_page.dart';
 import 'package:online_fm_radio/features/tags/tag_list_page.dart';
 import 'package:online_fm_radio/features/tags/tag_stations_page.dart';
@@ -124,6 +125,7 @@ class MyApp extends StatelessWidget {
             final tag = ModalRoute.of(context)?.settings.arguments as Tag;
             return TagStationsPage(tag: tag!);
           },
+          '/cached_stations': (context) => const CachedStationsPage(),
           '/local_stations': (context) => const LocalStationsPage(),
         },
       ),

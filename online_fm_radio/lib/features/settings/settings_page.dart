@@ -659,163 +659,219 @@ class SettingsPage extends StatelessWidget {
 
   /// 显示自定义导出对话框
   ///
-  /// 支持按数量、国家、标签、语言组合筛选导出
+  /// 支持按数量、国家、标签、语言组合筛选导出，使用下拉框选择本地数据
   void _showCustomExportDialog(BuildContext context) {
     int limit = 100;
-    String countryCode = '';
-    String tag = '';
-    String language = '';
+    String? selectedCountryCode;
+    String? selectedTag;
+    String? selectedLanguage;
     bool hideBroken = true;
     bool isLoading = false;
+    bool isLoadingOptions = false;
+
+    List<String> countryCodes = [];
+    List<String> tags = [];
+    List<String> languages = [];
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('自定义导出'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 数量
-                    const Text('导出数量', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: limit.toDouble(),
-                            min: 10,
-                            max: 1000,
-                            divisions: 99,
-                            label: '$limit',
-                            onChanged: (v) =>
-                                setState(() => limit = v.round()),
+            // 首次构建时加载选项
+            if (countryCodes.isEmpty && !isLoadingOptions) {
+              isLoadingOptions = true;
+              Future.microtask(() async {
+                try {
+                  final repository = StationRepository();
+                  final countries = await repository.loadCountries();
+                  countryCodes = countries.map((c) => c.countryCode).where((c) => c.isNotEmpty).toList()..sort();
+                  countryCodes.insert(0, '');
+
+                  final tagList = await repository.loadTags();
+                  tags = tagList.map((t) => t.name).toList()..sort();
+                  tags.insert(0, '');
+
+                  final langList = await repository.loadLanguages();
+                  languages = langList.map((l) => l.name).toList()..sort();
+                  languages.insert(0, '');
+                } catch (e) {
+                  debugPrint('Failed to load options: $e');
+                }
+                isLoadingOptions = false;
+                setState(() {});
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('自定义导出'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 数量
+                      const Text('导出数量', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: limit.toDouble(),
+                              min: 10,
+                              max: 1000,
+                              divisions: 99,
+                              label: '$limit',
+                              onChanged: (v) =>
+                                  setState(() => limit = v.round()),
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            '$limit',
-                            textAlign: TextAlign.end,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              '$limit',
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // 快捷数量按钮
-                    Wrap(
-                      spacing: 8,
-                      children: [50, 100, 200, 500, 1000].map((n) {
-                        return ChoiceChip(
-                          label: Text('$n'),
-                          selected: limit == n,
-                          onSelected: (_) => setState(() => limit = n),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    // 国家代码
-                    const Text('国家代码 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '如 CN、US、GB，留空表示不筛选',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    TextField(
-                      decoration: const InputDecoration(
-                        hintText: '例如: CN',
-                        isDense: true,
-                        border: OutlineInputBorder(),
+                        ],
                       ),
-                      textCapitalization: TextCapitalization.characters,
-                      onChanged: (v) => countryCode = v.trim().toUpperCase(),
-                    ),
-                    const SizedBox(height: 12),
-                    // 标签
-                    const Text('标签 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '如 pop、jazz、news，留空表示不筛选',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    TextField(
-                      decoration: const InputDecoration(
-                        hintText: '例如: pop',
-                        isDense: true,
-                        border: OutlineInputBorder(),
+                      const SizedBox(height: 12),
+                      // 快捷数量按钮
+                      Wrap(
+                        spacing: 8,
+                        children: [50, 100, 200, 500, 1000].map((n) {
+                          return ChoiceChip(
+                            label: Text('$n'),
+                            selected: limit == n,
+                            onSelected: (_) => setState(() => limit = n),
+                          );
+                        }).toList(),
                       ),
-                      onChanged: (v) => tag = v.trim(),
-                    ),
-                    const SizedBox(height: 12),
-                    // 语言
-                    const Text('语言 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '如 English、Chinese，留空表示不筛选',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    TextField(
-                      decoration: const InputDecoration(
-                        hintText: '例如: English',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (v) => language = v.trim(),
-                    ),
-                    const SizedBox(height: 12),
-                    // 隐藏损坏电台
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('仅可用电台'),
-                      subtitle: const Text('隐藏已损坏的电台'),
-                      value: hideBroken,
-                      onChanged: (v) => setState(() => hideBroken = v),
-                    ),
-                    if (isLoading) ...[
                       const SizedBox(height: 16),
-                      const Center(child: CircularProgressIndicator()),
+                      // 国家代码（下拉框）
+                      const Text('国家代码 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '从本地数据中选择，留空表示不筛选',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      isLoadingOptions
+                          ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
+                          : DropdownButtonFormField<String>(
+                              value: selectedCountryCode,
+                              items: countryCodes.map((code) {
+                                return DropdownMenuItem(
+                                  value: code,
+                                  child: Text(code.isEmpty ? '全部国家' : code),
+                                );
+                              }).toList(),
+                              onChanged: (value) =>
+                                  setState(() => selectedCountryCode = value),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                      const SizedBox(height: 12),
+                      // 标签（下拉框）
+                      const Text('标签 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '从本地数据中选择，留空表示不筛选',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      isLoadingOptions
+                          ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
+                          : DropdownButtonFormField<String>(
+                              value: selectedTag,
+                              items: tags.map((t) {
+                                return DropdownMenuItem(
+                                  value: t,
+                                  child: Text(t.isEmpty ? '全部标签' : t),
+                                );
+                              }).toList(),
+                              onChanged: (value) =>
+                                  setState(() => selectedTag = value),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                      const SizedBox(height: 12),
+                      // 语言（下拉框）
+                      const Text('语言 (可选)', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '从本地数据中选择，留空表示不筛选',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      isLoadingOptions
+                          ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
+                          : DropdownButtonFormField<String>(
+                              value: selectedLanguage,
+                              items: languages.map((l) {
+                                return DropdownMenuItem(
+                                  value: l,
+                                  child: Text(l.isEmpty ? '全部语言' : l),
+                                );
+                              }).toList(),
+                              onChanged: (value) =>
+                                  setState(() => selectedLanguage = value),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                      const SizedBox(height: 12),
+                      // 隐藏损坏电台
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('仅可用电台'),
+                        subtitle: const Text('隐藏已损坏的电台'),
+                        value: hideBroken,
+                        onChanged: (v) => setState(() => hideBroken = v),
+                      ),
+                      if (isLoading) ...[
+                        const SizedBox(height: 16),
+                        const Center(child: CircularProgressIndicator()),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () => Navigator.pop(context),
-                child: const Text('取消'),
-              ),
-              ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        setState(() => isLoading = true);
-                        await _performCustomExport(
-                          context,
-                          ExportFilter(
-                            limit: limit,
-                            countryCode: countryCode.isEmpty ? null : countryCode,
-                            tag: tag.isEmpty ? null : tag,
-                            language: language.isEmpty ? null : language,
-                            hideBroken: hideBroken,
-                          ),
-                        );
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                child: const Text('导出'),
-              ),
-            ],
-          );
+              actions: [
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading || isLoadingOptions
+                      ? null
+                      : () async {
+                          setState(() => isLoading = true);
+                          await _performCustomExport(
+                            context,
+                            ExportFilter(
+                              limit: limit,
+                              countryCode: selectedCountryCode?.isEmpty ?? true ? null : selectedCountryCode,
+                              tag: selectedTag?.isEmpty ?? true ? null : selectedTag,
+                              language: selectedLanguage?.isEmpty ?? true ? null : selectedLanguage,
+                              hideBroken: hideBroken,
+                            ),
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                  child: const Text('导出'),
+                ),
+              ],
+            );
           },
         );
       },
