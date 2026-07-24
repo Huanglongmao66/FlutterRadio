@@ -33,6 +33,20 @@ class _PlayerPageState extends State<PlayerPage> {
   VisualizerStyle _visualizerStyle = VisualizerStyle.bars;
 
   @override
+  void initState() {
+    super.initState();
+    // 进入播放页时自动播放对应电台
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final playerService = context.read<PlayerService>();
+      final current = playerService.currentStation;
+      // 如果当前没有播放或播放的不是这个电台，则自动播放
+      if (current?.id != widget.station.id) {
+        playerService.play(widget.station);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
