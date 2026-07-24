@@ -70,6 +70,13 @@ class StationRepository {
     return await _datasource.getCachedStationCount();
   }
 
+  /// 获取本地缓存的电台列表
+  ///
+  /// 不发起网络请求，直接返回本地缓存中的电台列表。
+  Future<List<Station>> getCachedStations() async {
+    return await _datasource.getCachedStations();
+  }
+
   /// 清空本地电台缓存
   Future<void> clearCache() async {
     await _datasource.clearCache();
