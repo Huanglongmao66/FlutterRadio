@@ -131,8 +131,7 @@ class _SearchPageState extends State<SearchPage> {
       appBar: AppTopBar(
         title: '',
         showSearch: false,
-        showCountryFilter: false,
-        showDownload: false,
+        showMoreMenu: false,
       ),
       body: Column(
         children: [
