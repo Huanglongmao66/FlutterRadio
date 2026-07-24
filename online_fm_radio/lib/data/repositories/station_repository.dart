@@ -89,6 +89,22 @@ class StationRepository {
     return await _datasource.loadStats(forceRefresh: true);
   }
 
+  /// 同步远程数据：对比缓存差异，只写入新增数据
+  ///
+  /// [onProgress] - 进度回调，参数为 (已对比数量, 总数量)
+  /// [shouldStop] - 返回 true 时停止同步
+  ///
+  /// 返回新增的电台数量
+  Future<int> syncRemoteStations({
+    void Function(int compared, int total)? onProgress,
+    bool Function()? shouldStop,
+  }) async {
+    return await _datasource.syncRemoteStations(
+      onProgress: onProgress,
+      shouldStop: shouldStop,
+    );
+  }
+
   /// 根据国家代码加载电台
   ///
   /// [countryCode] - ISO 3166-1 alpha-2 国家代码

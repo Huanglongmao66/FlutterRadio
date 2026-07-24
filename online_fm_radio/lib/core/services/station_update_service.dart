@@ -310,4 +310,47 @@ class StationUpdateService extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  /// 同步远程数据
+  ///
+  /// 对比本地缓存与远程数据，只下载并写入新增的差异数据。
+  /// 不会重复下载已存在的电台。
+  Future<int> syncData() async {
+    if (_isUpdating) return 0;
+
+    await WakelockPlus.enable();
+
+    _isUpdating = true;
+    _isPaused = false;
+    _isCancelled = false;
+    _errorMessage = null;
+    _updateComplete = false;
+    _fetchedCount = 0;
+    _totalCount = 10000;
+    notifyListeners();
+
+    try {
+      final newCount = await _repository.syncRemoteStations(
+        onProgress: (compared, total) {
+          _fetchedCount = compared;
+          _totalCount = total;
+          notifyListeners();
+        },
+        shouldStop: () => _isCancelled,
+      );
+
+      _fetchedCount = newCount;
+      _updateComplete = true;
+      _cachedCount = await _repository.getCachedStationCount();
+      return newCount;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return 0;
+    } finally {
+      _isUpdating = false;
+      _isPaused = false;
+      await WakelockPlus.disable();
+      notifyListeners();
+    }
+  }
 }

@@ -143,10 +143,10 @@ class LocalStationDatasource {
   /// [onWaitForResume] - 暂停时调用的 Future，完成后继续获取
   /// [shouldStop] - 返回 true 时停止获取（用于取消）
   ///
-  /// 性能优化策略：
-  /// - 串行请求：避免并发导致的内存和 UI 压力
-  /// - 即时缓存：每批次获取后立即缓存，释放内存
-  /// - 断点续传：支持从上次中断位置继续
+  /// 数据对比策略：
+  /// - 获取前先加载本地缓存的 ID 集合
+  /// - 每批次获取后，跳过已存在的重复数据
+  /// - 只将新增的差异数据写入缓存
   Future<int> fetchAllAndCache({
     void Function(int fetched, int total)? onProgress,
     int resumeOffset = 0,
@@ -157,16 +157,10 @@ class LocalStationDatasource {
     bool Function()? shouldStop,
   }) async {
     final totalStations = await _getMaxStations();
-    final existingIds = <String>{};
     int fetchedCount = resumeFetched;
 
-    // 如果是断点续传，先加载已缓存数据的 ID 集合
-    if (resumeOffset > 0) {
-      final existing = await _cacheService.getCachedStations();
-      for (final station in existing) {
-        existingIds.add(station.id);
-      }
-    }
+    // 获取本地已缓存的 ID 集合（用于对比差异）
+    final existingIds = await _cacheService.getCachedIds();
 
     // 预计算所有需要请求的 offset 列表
     final offsets = <int>[];
@@ -203,20 +197,20 @@ class LocalStationDatasource {
         final List<dynamic> jsonData = response.data as List<dynamic>;
         if (jsonData.isEmpty) break;
 
-        // 批量解析并去重
-        final batch = <Station>[];
+        // 批量解析并去重：只保留本地不存在的新电台
+        final newStations = <Station>[];
         for (final json in jsonData) {
           final station = _parseStation(json as Map<String, dynamic>);
           if (station != null && !existingIds.contains(station.id)) {
-            batch.add(station);
+            newStations.add(station);
             existingIds.add(station.id);
           }
         }
 
-        if (batch.isNotEmpty) {
-          // 追加到缓存文件
-          await _cacheService.appendStations(batch);
-          fetchedCount += batch.length;
+        // 只写入新增的差异数据
+        if (newStations.isNotEmpty) {
+          await _cacheService.appendStations(newStations);
+          fetchedCount += newStations.length;
           onProgress?.call(fetchedCount, totalStations);
         }
 
@@ -235,6 +229,69 @@ class LocalStationDatasource {
     }
 
     return fetchedCount;
+  }
+
+  /// 同步远程数据：对比缓存差异，只写入新增数据
+  ///
+  /// [onProgress] - 进度回调，参数为 (已对比数量, 总数量)
+  /// [shouldStop] - 返回 true 时停止同步
+  ///
+  /// 返回新增的电台数量
+  Future<int> syncRemoteStations({
+    void Function(int compared, int total)? onProgress,
+    bool Function()? shouldStop,
+  }) async {
+    final totalStations = await _getMaxStations();
+    final existingIds = await _cacheService.getCachedIds();
+    int newCount = 0;
+
+    final offsets = <int>[];
+    for (int i = 0; i < totalStations; i += _batchSize) {
+      offsets.add(i);
+    }
+
+    int comparedCount = 0;
+
+    for (final currentOffset in offsets) {
+      if (shouldStop != null && shouldStop()) break;
+
+      try {
+        final response = await _request('stations', queryParameters: {
+          'limit': _batchSize,
+          'offset': currentOffset,
+          'order': 'votes',
+          'reverse': 'true',
+        });
+
+        final List<dynamic> jsonData = response.data as List<dynamic>;
+        if (jsonData.isEmpty) break;
+
+        final newStations = <Station>[];
+        for (final json in jsonData) {
+          final station = _parseStation(json as Map<String, dynamic>);
+          if (station != null && !existingIds.contains(station.id)) {
+            newStations.add(station);
+            existingIds.add(station.id);
+          }
+        }
+
+        if (newStations.isNotEmpty) {
+          await _cacheService.appendStations(newStations);
+          newCount += newStations.length;
+        }
+
+        comparedCount += jsonData.length;
+        onProgress?.call(comparedCount, totalStations);
+
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        if (jsonData.length < _batchSize) break;
+      } catch (e) {
+        debugPrint('Failed to sync batch at offset $currentOffset: $e');
+      }
+    }
+
+    return newCount;
   }
 
   /// 解析单个电台数据，返回 null 如果数据无效

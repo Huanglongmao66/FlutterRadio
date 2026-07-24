@@ -39,6 +39,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   /// 当前选中的国家名称（来自 CountryPreferenceService，为空表示全部国家）。
   String? _selectedCountry;
 
+  /// 当前排序方式（默认按热门度）
+  StationSortMode _sortMode = StationSortMode.votes;
+
   /// 首次加载数据时的全局 loading 标志。
   bool _isLoading = true;
 
@@ -141,6 +144,37 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     await service.setCountry(country);
   }
 
+  /// 排序方式变化回调：重新对推荐列表排序
+  void _onSortModeChanged(StationSortMode mode) {
+    setState(() => _sortMode = mode);
+    _applySortMode();
+  }
+
+  /// 对推荐列表应用当前排序方式
+  void _applySortMode() {
+    if (_recommendedStations.isEmpty) return;
+
+    final sorted = List<Station>.from(_recommendedStations);
+    switch (_sortMode) {
+      case StationSortMode.votes:
+        sorted.sort((a, b) => b.votes.compareTo(a.votes));
+        break;
+      case StationSortMode.name:
+        sorted.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+      case StationSortMode.country:
+        sorted.sort((a, b) => a.country.toLowerCase().compareTo(b.country.toLowerCase()));
+        break;
+      case StationSortMode.newest:
+        // 按原始顺序（已按 votes 排序）保持不变
+        break;
+    }
+
+    setState(() {
+      _recommendedStations = sorted;
+    });
+  }
+
   Future<void> _loadCountries() async {
     try {
       _countries = await _repository.loadCountries();
@@ -172,6 +206,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         title: 'FMradio',
         selectedCountry: _selectedCountry,
         onCountrySelected: _onCountrySelected,
+        sortMode: _sortMode,
+        onSortModeChanged: _onSortModeChanged,
       ),
       body: Column(
         children: [

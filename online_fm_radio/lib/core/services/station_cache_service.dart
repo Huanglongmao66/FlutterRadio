@@ -75,6 +75,70 @@ class StationCacheService {
     await cacheStations(allStations, 1);
   }
 
+  /// 获取所有已缓存电台的 ID 集合
+  ///
+  /// 轻量级方法，只读取 ID 字段，避免加载完整数据。
+  /// 用于同步时对比差异。
+  Future<Set<String>> getCachedIds() async {
+    final stations = await getCachedStations();
+    return stations.map((s) => s.id).toSet();
+  }
+
+  /// 同步电台数据：对比远程数据，只写入差异部分
+  ///
+  /// [remoteStations] - 远程获取的电台列表
+  ///
+  /// 对比逻辑：
+  /// 1. 获取本地缓存中已存在的电台 ID 集合
+  /// 2. 过滤掉重复的电台
+  /// 3. 只将新增的电台追加到缓存
+  ///
+  /// 返回新增的电台数量
+  Future<int> syncStations(List<Station> remoteStations) async {
+    final existingIds = await getCachedIds();
+
+    // 过滤出本地不存在的新电台
+    final newStations = remoteStations
+        .where((s) => !existingIds.contains(s.id))
+        .toList();
+
+    if (newStations.isEmpty) {
+      return 0;
+    }
+
+    final existing = await getCachedStations();
+    final allStations = [...existing, ...newStations];
+    await cacheStations(allStations, 1);
+
+    return newStations.length;
+  }
+
+  /// 获取缓存中指定 ID 的电台
+  ///
+  /// [ids] - 要查询的 ID 集合
+  /// 返回存在的电台列表
+  Future<List<Station>> getStationsByIds(Set<String> ids) async {
+    final stations = await getCachedStations();
+    return stations.where((s) => ids.contains(s.id)).toList();
+  }
+
+  /// 移除缓存中指定 ID 的电台
+  ///
+  /// [ids] - 要移除的电台 ID 集合
+  /// 返回移除的数量
+  Future<int> removeStationsByIds(Set<String> ids) async {
+    final stations = await getCachedStations();
+    final before = stations.length;
+    final filtered = stations.where((s) => !ids.contains(s.id)).toList();
+    final removed = before - filtered.length;
+
+    if (removed > 0) {
+      await cacheStations(filtered, 1);
+    }
+
+    return removed;
+  }
+
   /// 获取缓存的电台列表
   ///
   /// 返回解析后的 Station 对象列表，如果缓存为空则返回空列表
