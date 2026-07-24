@@ -253,7 +253,7 @@ class LocalStationDatasource {
 
       final List<dynamic> jsonData = response.data as List<dynamic>;
       if (jsonData.isEmpty) {
-        return (offset: offset, stations: []);
+        return (offset: offset, stations: <Station>[]);
       }
 
       // 批量解析 JSON，跳过无效数据
@@ -266,7 +266,7 @@ class LocalStationDatasource {
       return (offset: offset, stations: batch);
     } catch (e) {
       debugPrint('Failed to fetch batch at offset $offset: $e');
-      return (offset: offset, stations: []);
+      return (offset: offset, stations: <Station>[]);
     }
   }
 
