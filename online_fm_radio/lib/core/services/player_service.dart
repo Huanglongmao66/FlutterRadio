@@ -144,7 +144,11 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> pause() async {
     if (!_isPlaying) return;
-    await _player.pause();
+    if (_audioHandler != null) {
+      await _audioHandler.pause();
+    } else {
+      await _player.pause();
+    }
     _isPlaying = false;
     notifyListeners();
   }
@@ -161,7 +165,11 @@ class PlayerService extends ChangeNotifier {
   }
 
   Future<void> stop() async {
-    await _player.stop();
+    if (_audioHandler != null) {
+      await _audioHandler.stop();
+    } else {
+      await _player.stop();
+    }
     _currentStation = null;
     _isPlaying = false;
     _isBuffering = false;

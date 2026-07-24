@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 /// - 柱状图柱子宽度系数（0.3-0.7，默认0.5）
 /// - 动效速度系数（0.5-2.0，默认1.0）
 class VisualizerSettingsService extends ChangeNotifier {
-  bool _isEnabled = true;
+  bool _isEnabled = false;
   double _barWidthFactor = 0.5;
   double _speedFactor = 1.0;
 

@@ -39,30 +39,10 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
 
   void _init() {
     _playerStateSub = _player.playerStateStream.listen((state) {
-      playbackState.add(playbackState.value.copyWith(
-        controls: [
-          MediaControl.skipToPrevious,
-          MediaControl.play,
-          MediaControl.pause,
-          MediaControl.stop,
-          MediaControl.skipToNext,
-        ],
-        systemActions: const {
-          MediaAction.playPause,
-          MediaAction.stop,
-          MediaAction.skipToNext,
-          MediaAction.skipToPrevious,
-          MediaAction.seekForward,
-          MediaAction.seekBackward,
-        },
-        androidCompactActionIndices: const [0, 1, 4],
-        processingState: _mapProcessingState(state.processingState),
+      _broadcastPlaybackState(
         playing: state.playing,
-        updatePosition: _player.position,
-        bufferedPosition: _player.bufferedPosition,
-        speed: _player.speed,
-        queueIndex: _currentIndex,
-      ));
+        processingState: _mapProcessingState(state.processingState),
+      );
     });
 
     _playbackEventSub = _player.playbackEventStream.listen((event) {
@@ -70,6 +50,39 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
         stop();
       }
     });
+  }
+
+  /// 统一广播播放状态，确保通知栏与锁屏页面的控制按钮正常显示。
+  ///
+  /// [playing] - 是否正在播放
+  /// [processingState] - 音频处理状态
+  void _broadcastPlaybackState({
+    required bool playing,
+    required AudioProcessingState processingState,
+  }) {
+    playbackState.add(playbackState.value.copyWith(
+      controls: [
+        MediaControl.skipToPrevious,
+        playing ? MediaControl.pause : MediaControl.play,
+        MediaControl.stop,
+        MediaControl.skipToNext,
+      ],
+      systemActions: const {
+        MediaAction.playPause,
+        MediaAction.stop,
+        MediaAction.skipToNext,
+        MediaAction.skipToPrevious,
+        MediaAction.seekForward,
+        MediaAction.seekBackward,
+      },
+      androidCompactActionIndices: const [0, 1, 3],
+      processingState: processingState,
+      playing: playing,
+      updatePosition: _player.position,
+      bufferedPosition: _player.bufferedPosition,
+      speed: _player.speed,
+      queueIndex: _currentIndex,
+    ));
   }
 
   static AudioProcessingState _mapProcessingState(ProcessingState state) {
@@ -153,18 +166,31 @@ class RadioAudioHandler extends BaseAudioHandler with QueueHandler {
   // ===== audio_service 控制接口 =====
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    // 先广播播放中状态，确保通知栏/锁屏控制按钮立即显示
+    _broadcastPlaybackState(
+      playing: true,
+      processingState: AudioProcessingState.ready,
+    );
+    await _player.play();
+  }
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() async {
+    await _player.pause();
+    _broadcastPlaybackState(
+      playing: false,
+      processingState: AudioProcessingState.ready,
+    );
+  }
 
   @override
   Future<void> stop() async {
     await _player.stop();
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.idle,
+    _broadcastPlaybackState(
       playing: false,
-    ));
+      processingState: AudioProcessingState.idle,
+    );
   }
 
   @override
