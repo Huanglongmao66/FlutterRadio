@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/services/local_station_service.dart';
 import 'package:online_fm_radio/core/services/station_update_service.dart';
 import 'package:online_fm_radio/core/ui/app_drawer.dart';
 import 'package:online_fm_radio/core/ui/app_top_bar.dart';
@@ -207,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildStatsGrid(),
+              _buildStatsGrid(context),
               if (updateService.hasResumeData && !updateService.isUpdating) ...[
                 const SizedBox(height: 8),
                 Container(
@@ -260,11 +261,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// 构建统计数据网格
-  Widget _buildStatsGrid() {
+  ///
+  /// 本地电台数量来自 [LocalStationService]（导入的本地电台，与远程更新相互独立）；
+  /// 国家、语言、标签数量来自本地缓存的远程电台数据统计。
+  Widget _buildStatsGrid(BuildContext context) {
+    final localCount = context.watch<LocalStationService>().stations.length;
+
     if (_loadingStats) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: CircularProgressIndicator(),
         ),
       );
@@ -285,13 +291,16 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
-    if (_stats == null) return const SizedBox.shrink();
+
+    final countries = _stats?.countries ?? 0;
+    final languages = _stats?.languages ?? 0;
+    final tags = _stats?.tags ?? 0;
 
     final items = [
-      _StatItem(Icons.radio, '本地电台', '${_stats!.stations}', '/local_stations'),
-      _StatItem(Icons.public, '国家', '${_stats!.countries}', '/countries'),
-      _StatItem(Icons.language, '语言', '${_stats!.languages}', '/languages'),
-      _StatItem(Icons.label, '标签', '${_stats!.tags}', '/tags'),
+      _StatItem(Icons.radio, '本地电台', '$localCount', '/local_stations'),
+      _StatItem(Icons.public, '国家', '$countries', '/countries'),
+      _StatItem(Icons.language, '语言', '$languages', '/languages'),
+      _StatItem(Icons.label, '标签', '$tags', '/tags'),
     ];
 
     return GridView.builder(

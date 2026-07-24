@@ -6,6 +6,7 @@ import 'package:online_fm_radio/core/services/audio_handler.dart';
 import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/services/local_station_service.dart';
 import 'package:online_fm_radio/core/services/player_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/core/services/visualizer_settings_service.dart';
@@ -70,6 +71,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<HistoryService>(
           create: (_) => HistoryService()..loadHistory(),
+        ),
+        ChangeNotifierProvider<LocalStationService>(
+          create: (_) => LocalStationService()..loadStations(),
         ),
         ChangeNotifierProvider<PlayerService>(
           create: (context) => PlayerService(

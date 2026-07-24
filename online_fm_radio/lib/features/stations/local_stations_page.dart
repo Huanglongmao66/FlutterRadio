@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:online_fm_radio/core/services/local_station_service.dart';
 import 'package:online_fm_radio/data/models/station.dart';
-import 'package:online_fm_radio/data/repositories/station_repository.dart';
 import 'package:online_fm_radio/shared/components/station_card.dart';
 
 class LocalStationsPage extends StatefulWidget {
@@ -11,57 +12,28 @@ class LocalStationsPage extends StatefulWidget {
 }
 
 class _LocalStationsPageState extends State<LocalStationsPage> {
-  final StationRepository _repository = StationRepository();
-  List<Station> _stations = [];
-  List<Station> _filteredStations = [];
-  bool _isLoading = true;
-  String? _errorMessage;
   String _searchKeyword = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadStations();
-  }
-
-  Future<void> _loadStations() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      _stations = await _repository.loadStations();
-      _filterStations();
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _filterStations() {
-    if (_searchKeyword.isEmpty) {
-      _filteredStations = _stations;
-    } else {
-      final keyword = _searchKeyword.toLowerCase();
-      _filteredStations = _stations
-          .where((s) =>
-              s.name.toLowerCase().contains(keyword) ||
-              s.country.toLowerCase().contains(keyword) ||
-              s.language.toLowerCase().contains(keyword) ||
-              s.category.toLowerCase().contains(keyword))
-          .toList();
-    }
+  List<Station> get _filteredStations {
+    final stations = context.watch<LocalStationService>().stations;
+    if (_searchKeyword.isEmpty) return stations;
+    final keyword = _searchKeyword.toLowerCase();
+    return stations
+        .where((s) =>
+            s.name.toLowerCase().contains(keyword) ||
+            s.country.toLowerCase().contains(keyword) ||
+            s.language.toLowerCase().contains(keyword) ||
+            s.category.toLowerCase().contains(keyword))
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final stationCount = context.watch<LocalStationService>().stations.length;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('本地电台 (${_stations.length})'),
+        title: Text('本地电台 ($stationCount)'),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
@@ -81,7 +53,6 @@ class _LocalStationsPageState extends State<LocalStationsPage> {
               onChanged: (value) {
                 setState(() {
                   _searchKeyword = value;
-                  _filterStations();
                 });
               },
             ),
@@ -93,53 +64,43 @@ class _LocalStationsPageState extends State<LocalStationsPage> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('正在加载本地电台...'),
-          ],
-        ),
-      );
-    }
+    final stations = _filteredStations;
 
-    if (_errorMessage != null) {
+    if (stations.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.radio_outlined, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            Text('加载失败', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(_errorMessage!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadStations,
-              child: const Text('重试'),
+            Text(
+              _searchKeyword.isEmpty
+                  ? '暂无本地电台'
+                  : '没有找到匹配的电台',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
+            if (_searchKeyword.isEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '请在设置中导入 M3U/M3U8/JSON 文件',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
           ],
         ),
       );
     }
 
-    if (_filteredStations.isEmpty) {
-      return const Center(child: Text('没有找到匹配的电台'));
-    }
-
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _filteredStations.length,
+      itemCount: stations.length,
       itemBuilder: (context, index) {
         return StationCard(
-          station: _filteredStations[index],
+          station: stations[index],
           onTap: () => Navigator.pushNamed(
             context,
             '/player',
-            arguments: _filteredStations[index],
+            arguments: stations[index],
           ),
         );
       },

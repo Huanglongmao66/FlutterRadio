@@ -4,6 +4,7 @@ import 'package:online_fm_radio/core/services/country_preference_service.dart';
 import 'package:online_fm_radio/core/services/favorites_service.dart';
 import 'package:online_fm_radio/core/services/history_service.dart';
 import 'package:online_fm_radio/core/services/import_export_service.dart';
+import 'package:online_fm_radio/core/services/local_station_service.dart';
 import 'package:online_fm_radio/core/services/sleep_timer_service.dart';
 import 'package:online_fm_radio/core/services/visualizer_settings_service.dart';
 import 'package:online_fm_radio/core/utils/battery_optimization_utils.dart';
@@ -697,7 +698,7 @@ class SettingsPage extends StatelessWidget {
 
   /// 导入电台列表
   ///
-  /// 从文件选择器选择文件并导入电台数据，自动去重后添加到收藏
+  /// 从文件选择器选择文件并导入电台数据，自动去重后添加到本地电台列表
   Future<void> _importStations(BuildContext context) async {
     final service = ImportExportService();
     try {
@@ -706,18 +707,12 @@ class SettingsPage extends StatelessWidget {
         return;
       }
 
-      final favoritesService = Provider.of<FavoritesService>(context, listen: false);
-      int importedCount = 0;
-      for (final station in stations) {
-        if (!favoritesService.isFavorite(station)) {
-          await favoritesService.toggleFavorite(station);
-          importedCount++;
-        }
-      }
+      final localStationService = Provider.of<LocalStationService>(context, listen: false);
+      final importedCount = await localStationService.importStations(stations);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('成功导入 $importedCount 个电台')),
+          SnackBar(content: Text('成功导入 $importedCount 个电台到本地电台')),
         );
       }
     } catch (e) {
