@@ -104,15 +104,22 @@ class LocalStationDatasource {
   /// [resumeOffset] - 断点续传起始偏移量，0 表示从头开始
   /// [resumeFetched] - 断点续传已获取数量，用于累计计数
   /// [onBatchSaved] - 每批次保存后的回调，参数为 (当前 offset, 已获取数量, 总数量)
+  /// [isPaused] - 返回 true 时暂停获取，等待 [onWaitForResume] 完成
+  /// [onWaitForResume] - 暂停时调用的 Future，完成后继续获取
+  /// [shouldStop] - 返回 true 时停止获取（用于取消）
   ///
   /// 用于首次启动或数据更新时，批量从 API 拉取大量电台数据并缓存。
   /// 每次请求 [_batchSize] 条，直到获取完所有数据或达到 stats API 返回的电台总数上限。
   /// 支持断点续传：如果上次更新中断，下次从保存的 offset 继续。
+  /// 支持暂停/继续：每批次开始前检查 [isPaused]，若为 true 则等待 [onWaitForResume]。
   Future<int> fetchAllAndCache({
     void Function(int fetched, int total)? onProgress,
     int resumeOffset = 0,
     int resumeFetched = 0,
     void Function(int offset, int fetched, int total)? onBatchSaved,
+    bool Function()? isPaused,
+    Future<void> Function()? onWaitForResume,
+    bool Function()? shouldStop,
   }) async {
     final totalStations = await _getMaxStations();
     final allStations = <Station>[];
@@ -126,6 +133,26 @@ class LocalStationDatasource {
     }
 
     while (offset < totalStations) {
+      // 取消检查
+      if (shouldStop != null && shouldStop()) {
+        if (allStations.isNotEmpty) {
+          await _cacheService.cacheStations(allStations, 1);
+        }
+        return fetchedCount;
+      }
+
+      // 暂停检查：等待恢复信号
+      while (isPaused != null && isPaused()) {
+        if (shouldStop != null && shouldStop()) {
+          return fetchedCount;
+        }
+        if (onWaitForResume != null) {
+          await onWaitForResume();
+        } else {
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+      }
+
       try {
         final response = await _request('stations', queryParameters: {
           'limit': _batchSize,
@@ -142,12 +169,7 @@ class LocalStationDatasource {
             .where((station) => station.streamUrl.isNotEmpty)
             .toList();
 
-        // 断点续传时追加到已有数据，否则直接添加
-        if (resumeOffset > 0) {
-          allStations.addAll(batch);
-        } else {
-          allStations.addAll(batch);
-        }
+        allStations.addAll(batch);
         fetchedCount += batch.length;
         onProgress?.call(fetchedCount, totalStations);
 
@@ -272,6 +294,21 @@ class LocalStationDatasource {
       debugPrint('Failed to load from API: $e, falling back to local data');
       return await _loadFromLocalAsset();
     }
+  }
+
+  /// 检查是否存在本地缓存
+  Future<bool> hasCache() async {
+    return await _cacheService.hasCache();
+  }
+
+  /// 获取本地缓存的电台列表
+  Future<List<Station>> getCachedStations() async {
+    return await _cacheService.getCachedStations();
+  }
+
+  /// 清空本地电台缓存
+  Future<void> clearCache() async {
+    await _cacheService.clearCache();
   }
 
   /// 根据国家代码加载电台

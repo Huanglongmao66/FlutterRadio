@@ -39,18 +39,49 @@ class StationRepository {
   /// [resumeOffset] - 断点续传起始偏移量
   /// [resumeFetched] - 断点续传已获取数量
   /// [onBatchSaved] - 每批次保存后的回调
+  /// [isPaused] - 返回 true 时暂停获取
+  /// [onWaitForResume] - 暂停时等待恢复的 Future
+  /// [shouldStop] - 返回 true 时停止获取
   Future<int> fetchAllAndCache({
     void Function(int fetched, int total)? onProgress,
     int resumeOffset = 0,
     int resumeFetched = 0,
     void Function(int offset, int fetched, int total)? onBatchSaved,
+    bool Function()? isPaused,
+    Future<void> Function()? onWaitForResume,
+    bool Function()? shouldStop,
   }) async {
     return await _datasource.fetchAllAndCache(
       onProgress: onProgress,
       resumeOffset: resumeOffset,
       resumeFetched: resumeFetched,
       onBatchSaved: onBatchSaved,
+      isPaused: isPaused,
+      onWaitForResume: onWaitForResume,
+      shouldStop: shouldStop,
     );
+  }
+
+  /// 获取本地缓存电台数量
+  ///
+  /// 不发起网络请求，直接返回本地缓存中的电台数量。
+  Future<int> getCachedStationCount() async {
+    final hasCache = await _datasource.hasCache();
+    if (!hasCache) return 0;
+    final stations = await _datasource.getCachedStations();
+    return stations.length;
+  }
+
+  /// 清空本地电台缓存
+  Future<void> clearCache() async {
+    await _datasource.clearCache();
+  }
+
+  /// 加载远程统计数据（强制刷新，不走缓存）
+  ///
+  /// 返回服务器最新的电台总数、国家数、语言数等统计信息。
+  Future<RadioStats> loadRemoteStats() async {
+    return await _datasource.loadStats(forceRefresh: true);
   }
 
   /// 根据国家代码加载电台
