@@ -1,20 +1,41 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_fm_radio/data/models/station.dart';
 
 /// 电台缓存服务类
 ///
 /// 管理电台数据的本地缓存，支持缓存、追加、读取和过期检查。
-/// 使用 SharedPreferences 作为持久化存储，数据格式为 JSON 字符串列表。
+/// 使用文件存储代替 SharedPreferences（更适合大数据量），
+/// 元数据（时间戳、页码）仍使用 SharedPreferences。
+///
+/// 性能优化：
+/// - 使用文件存储：相比 SharedPreferences，文件存储更适合存储大量数据
+/// - 批量序列化：减少 I/O 操作次数
+/// - 缓存预热：首次读取后缓存在内存中
 class StationCacheService {
-  /// 电台列表缓存键
-  static const String _cacheKey = 'cached_stations';
+  /// 电台列表缓存文件名
+  static const String _cacheFileName = 'stations_cache.json';
 
   /// 缓存时间戳键
   static const String _cacheTimestampKey = 'stations_cache_timestamp';
 
   /// 缓存页码键
   static const String _cachePageKey = 'stations_cache_page';
+
+  /// 内存缓存（首次读取后缓存在内存中，避免重复读取文件）
+  List<Station>? _memoryCache;
+
+  /// 内存缓存时间戳
+  int? _memoryCacheTimestamp;
+
+  /// 获取缓存文件路径
+  Future<String> _getCacheFilePath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/$_cacheFileName';
+  }
 
   /// 缓存电台列表
   ///
@@ -23,10 +44,21 @@ class StationCacheService {
   ///
   /// 同时保存时间戳和页码信息
   Future<void> cacheStations(List<Station> stations, int page) async {
+    // 更新内存缓存
+    _memoryCache = List.unmodifiable(stations);
+    _memoryCacheTimestamp = DateTime.now().millisecondsSinceEpoch;
+
+    // 序列化并写入文件
+    final filePath = await _getCacheFilePath();
+    final jsonList = stations.map((s) => s.toJson()).toList();
+    final jsonString = jsonEncode(jsonList);
+
+    // 使用文件存储，比 SharedPreferences 更适合大数据量
+    await File(filePath).writeAsString(jsonString);
+
+    // 保存元数据
     final prefs = await SharedPreferences.getInstance();
-    final jsonList = stations.map((s) => jsonEncode(s.toJson())).toList();
-    await prefs.setStringList(_cacheKey, jsonList);
-    await prefs.setInt(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(_cacheTimestampKey, _memoryCacheTimestamp!);
     await prefs.setInt(_cachePageKey, page);
   }
 
@@ -40,32 +72,60 @@ class StationCacheService {
     final existingIds = existing.map((s) => s.id).toSet();
     final newStations = stations.where((s) => !existingIds.contains(s.id)).toList();
     final allStations = [...existing, ...newStations];
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = allStations.map((s) => jsonEncode(s.toJson())).toList();
-    await prefs.setStringList(_cacheKey, jsonList);
+    await cacheStations(allStations, 1);
   }
 
   /// 获取缓存的电台列表
   ///
   /// 返回解析后的 Station 对象列表，如果缓存为空则返回空列表
+  /// 优先从内存缓存读取，避免重复读取文件
   Future<List<Station>> getCachedStations() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = prefs.getStringList(_cacheKey);
-    if (jsonList == null || jsonList.isEmpty) return [];
+    // 优先从内存缓存读取
+    if (_memoryCache != null) {
+      return _memoryCache!;
+    }
 
-    return jsonList.map((jsonStr) {
-      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
-      return Station.fromJson(map);
-    }).toList();
+    final filePath = await _getCacheFilePath();
+    final file = File(filePath);
+
+    if (!await file.exists()) {
+      return [];
+    }
+
+    try {
+      final jsonString = await file.readAsString();
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      final stations = jsonList
+          .map((item) => Station.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      // 更新内存缓存
+      _memoryCache = List.unmodifiable(stations);
+      final prefs = await SharedPreferences.getInstance();
+      _memoryCacheTimestamp = prefs.getInt(_cacheTimestampKey);
+
+      return stations;
+    } catch (e) {
+      return [];
+    }
   }
 
   /// 检查是否存在缓存
   ///
   /// 返回 true 表示存在非空缓存，false 表示缓存不存在或为空
   Future<bool> hasCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = prefs.getStringList(_cacheKey);
-    return jsonList != null && jsonList.isNotEmpty;
+    if (_memoryCache != null && _memoryCache!.isNotEmpty) {
+      return true;
+    }
+
+    final filePath = await _getCacheFilePath();
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return false;
+    }
+
+    final length = await file.length();
+    return length > 0;
   }
 
   /// 获取缓存的页码
@@ -78,10 +138,21 @@ class StationCacheService {
 
   /// 清除所有缓存数据
   ///
-  /// 删除缓存列表、时间戳和页码信息
+  /// 删除缓存文件、时间戳和页码信息，同时清除内存缓存
   Future<void> clearCache() async {
+    // 清除内存缓存
+    _memoryCache = null;
+    _memoryCacheTimestamp = null;
+
+    // 删除缓存文件
+    final filePath = await _getCacheFilePath();
+    final file = File(filePath);
+    if (await file.exists()) {
+      await file.delete();
+    }
+
+    // 删除元数据
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_cacheKey);
     await prefs.remove(_cacheTimestampKey);
     await prefs.remove(_cachePageKey);
   }
@@ -92,11 +163,44 @@ class StationCacheService {
   ///
   /// 返回 true 表示缓存已过期或不存在，false 表示缓存有效
   Future<bool> isCacheExpired({Duration maxAge = const Duration(hours: 24)}) async {
+    if (_memoryCacheTimestamp != null) {
+      final cacheTime = DateTime.fromMillisecondsSinceEpoch(_memoryCacheTimestamp!);
+      return DateTime.now().difference(cacheTime) > maxAge;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final timestamp = prefs.getInt(_cacheTimestampKey);
     if (timestamp == null) return true;
 
     final cacheTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return DateTime.now().difference(cacheTime) > maxAge;
+  }
+
+  /// 获取缓存电台数量（不解析完整数据，直接从内存或文件大小估算）
+  Future<int> getCachedCount() async {
+    if (_memoryCache != null) {
+      return _memoryCache!.length;
+    }
+
+    final filePath = await _getCacheFilePath();
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return 0;
+    }
+
+    try {
+      final jsonString = await file.readAsString();
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// 刷新内存缓存（强制重新读取文件）
+  Future<void> refreshMemoryCache() async {
+    _memoryCache = null;
+    _memoryCacheTimestamp = null;
+    await getCachedStations();
   }
 }

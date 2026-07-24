@@ -65,11 +65,9 @@ class StationRepository {
   /// 获取本地缓存电台数量
   ///
   /// 不发起网络请求，直接返回本地缓存中的电台数量。
+  /// 优先使用缓存服务的 getCachedCount 方法（更高效）。
   Future<int> getCachedStationCount() async {
-    final hasCache = await _datasource.hasCache();
-    if (!hasCache) return 0;
-    final stations = await _datasource.getCachedStations();
-    return stations.length;
+    return await _datasource.getCachedStationCount();
   }
 
   /// 清空本地电台缓存
