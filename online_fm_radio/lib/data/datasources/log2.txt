@@ -1,0 +1,95 @@
+Run cd online_fm_radio && flutter build apk --release
+7
+Upgrading build.gradle
+8
+Upgrading gradle.properties
+9
+Upgrading gradle.properties
+10
+Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.7.0) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.11.1 soon.
+11
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+12
+
+13
+Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of com.android.application. 
+14
+If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+15
+
+16
+Warning: Flutter support for your project's Kotlin version (2.2.0) will soon be dropped. Please upgrade your Kotlin version to a version of at least 2.2.20 soon.
+17
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+18
+
+19
+Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/settings.gradle), by a plugin with the id of org.jetbrains.kotlin.android. 
+20
+If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined in the top-level build.gradle file (/home/runner/work/FlutterRadio/FlutterRadio/online_fm_radio/android/build.gradle) by the ext.kotlin_version property.
+21
+
+22
+Running Gradle task 'assembleRelease'...                        
+23
+lib/data/datasources/local_station_datasource.dart:256:16: Error: A value of type '({int offset, List<dynamic> stations})' can't be returned from an async function with return type 'Future<({int offset, List<Station> stations})>'.
+24
+ - 'List' is from 'dart:core'.
+25
+ - 'Future' is from 'dart:async'.
+26
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+27
+        return (offset: offset, stations: []);
+28
+               ^
+29
+lib/data/datasources/local_station_datasource.dart:269:14: Error: A value of type '({int offset, List<dynamic> stations})' can't be returned from an async function with return type 'Future<({int offset, List<Station> stations})>'.
+30
+ - 'List' is from 'dart:core'.
+31
+ - 'Future' is from 'dart:async'.
+32
+ - 'Station' is from 'package:online_fm_radio/data/models/station.dart' ('lib/data/models/station.dart').
+33
+      return (offset: offset, stations: []);
+34
+             ^
+35
+Target kernel_snapshot_program failed: Exception
+36
+
+37
+
+38
+FAILURE: Build failed with an exception.
+39
+
+40
+* What went wrong:
+41
+Execution failed for task ':app:compileFlutterBuildRelease'.
+42
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.44.7-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+43
+
+44
+* Try:
+45
+> Run with --stacktrace option to get the stack trace.
+46
+> Run with --info or --debug option to get more log output.
+47
+> Run with --scan to get full insights.
+48
+> Get more help at https://help.gradle.org.
+49
+
+50
+BUILD FAILED in 2m 58s
+51
+Running Gradle task 'assembleRelease'...                          180.1s
+52
+Gradle task assembleRelease failed with exit code 1
+53
+Error: Process completed with exit code 1.

@@ -1,0 +1,770 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:online_fm_radio/core/services/favorites_service.dart';
+import 'package:online_fm_radio/core/services/history_service.dart';
+import 'package:online_fm_radio/core/services/local_station_service.dart';
+import 'package:online_fm_radio/core/services/station_update_service.dart';
+import 'package:online_fm_radio/core/ui/app_drawer.dart';
+import 'package:online_fm_radio/core/ui/app_top_bar.dart';
+import 'package:online_fm_radio/features/home/home_page_view_model.dart';
+import 'package:online_fm_radio/data/models/radio_stats.dart';
+import 'package:online_fm_radio/data/models/station.dart';
+import 'package:online_fm_radio/data/repositories/station_repository.dart';
+import 'package:online_fm_radio/shared/components/station_card.dart';
+
+/// "我的"页面
+///
+/// 包含用户信息、设置入口、电台数据更新、收藏列表和播放历史。
+/// 监听 StationUpdateService 以显示更新进度和结果。
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final StationRepository _repository = StationRepository();
+  RadioStats? _stats;
+  bool _loadingStats = true;
+  String? _statsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    // 初始化时加载缓存与远程电台数量，用于统计网格显示
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<StationUpdateService>().refreshStats();
+      }
+    });
+  }
+
+  Future<void> _loadStats() async {
+    setState(() {
+      _loadingStats = true;
+      _statsError = null;
+    });
+    try {
+      final stats = await _repository.loadLocalStats();
+      if (mounted) {
+        setState(() {
+          _stats = stats;
+          _loadingStats = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _statsError = e.toString();
+          _loadingStats = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const AppDrawer(),
+      appBar: const AppTopBar(title: '我的'),
+      body: Consumer<StationUpdateService>(
+        builder: (context, updateService, child) {
+          /// 更新完成后刷新主页数据、本地统计并显示结果
+          if (updateService.updateComplete) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Provider.of<HomePageViewModel>(context, listen: false).refresh();
+              _loadStats();
+              _showUpdateResult(context, updateService);
+              updateService.resetState();
+            });
+          }
+
+          return ListView(
+            children: [
+              _buildUserProfile(context),
+              _buildSettingsSection(context),
+              _buildUpdateStationSection(context, updateService),
+              _buildFavoritesSection(context),
+              _buildHistorySection(context),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// 构建用户信息区域
+  Widget _buildUserProfile(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: const Column(
+        children: [
+          CircleAvatar(
+            radius: 48,
+            backgroundColor: Color(0xFF6366F1),
+            child: Icon(
+              Icons.person,
+              size: 48,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'FMradio 用户',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            '在线收听电台',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建设置区域
+  Widget _buildSettingsSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('设置'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => Navigator.pushNamed(context, '/settings'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.help),
+              title: const Text('帮助与反馈'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('帮助与反馈功能开发中')),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('关于'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                showAboutDialog(
+                  context: context,
+                  applicationName: 'FMradio',
+                  applicationVersion: '1.0.0',
+                  applicationIcon: const Icon(Icons.radio, size: 48),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建电台数据更新区域
+  ///
+  /// [updateService] - 电台更新服务
+  Widget _buildUpdateStationSection(
+      BuildContext context, StationUpdateService updateService) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.cloud_download, size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '电台数据',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (updateService.isUpdating)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildStatsGrid(context),
+              const SizedBox(height: 12),
+              _buildUpdateControls(context, updateService),
+              if (updateService.hasResumeData && !updateService.isUpdating) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '上次更新未完成（${updateService.fetchedCount}/${updateService.totalCount}），点击继续更新',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (updateService.isUpdating) ...[
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: updateService.progress > 0
+                      ? updateService.progress
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      updateService.isPaused ? Icons.pause_circle : Icons.sync,
+                      size: 14,
+                      color: updateService.isPaused ? Colors.orange : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        updateService.isPaused
+                            ? '已暂停 (${updateService.fetchedCount} / ${updateService.totalCount})'
+                            : '正在获取电台数据... (${updateService.fetchedCount} / ${updateService.totalCount})',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: updateService.isPaused ? Colors.orange : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else if (updateService.errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '更新失败: ${updateService.errorMessage}',
+                  style: const TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ] else if (updateService.updateComplete &&
+                  !updateService.needsUpdate &&
+                  updateService.cachedCount > 0) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '缓存电台数量与远程一致（${updateService.cachedCount}），无需更新',
+                          style: const TextStyle(fontSize: 12, color: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建更新控制按钮行
+  ///
+  /// 根据当前更新状态显示不同的操作按钮：
+  /// - 空闲：刷新（对比后跳过或更新）
+  /// - 更新中：暂停、重新获取
+  /// - 已暂停：继续、重新获取
+  Widget _buildUpdateControls(
+      BuildContext context, StationUpdateService updateService) {
+    if (updateService.isUpdating) {
+      // 更新中或暂停状态
+      return Row(
+        children: [
+          if (updateService.isPaused)
+            Expanded(
+              child: _buildControlButton(
+                context,
+                icon: Icons.play_arrow,
+                label: '继续',
+                color: Colors.green,
+                onTap: updateService.resume,
+              ),
+            )
+          else
+            Expanded(
+              child: _buildControlButton(
+                context,
+                icon: Icons.pause,
+                label: '暂停',
+                color: Colors.orange,
+                onTap: updateService.pause,
+              ),
+            ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildControlButton(
+              context,
+              icon: Icons.restart_alt,
+              label: '重新获取',
+              color: Colors.red,
+              onTap: () => _confirmRestart(context, updateService),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 空闲状态
+    return Row(
+      children: [
+        Expanded(
+          child: _buildControlButton(
+            context,
+            icon: Icons.refresh,
+            label: '刷新',
+            color: Theme.of(context).colorScheme.primary,
+            onTap: () => _startRefresh(context, updateService),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildControlButton(
+            context,
+            icon: updateService.hasResumeData ? Icons.play_arrow : Icons.download_for_offline,
+            label: updateService.hasResumeData ? '继续更新' : '重新获取',
+            color: updateService.hasResumeData ? Colors.green : Colors.red,
+            onTap: updateService.hasResumeData
+                ? () => _startUpdate(context, updateService)
+                : () => _confirmRestart(context, updateService),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建单个控制按钮
+  Widget _buildControlButton(
+    BuildContext context, {
+      required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 启动刷新（对比缓存与远程，相同则跳过）
+  void _startRefresh(BuildContext context, StationUpdateService service) {
+    service.refresh();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('正在对比缓存与远程数据...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 构建统计数据网格
+  ///
+  /// 数据来源：
+  /// - 本地电台：[LocalStationService]（导入的本地电台，与远程更新相互独立）
+  /// - 缓存电台：[StationUpdateService.cachedCount]（本地缓存的远程电台数量）
+  /// - 远程电台：[StationUpdateService.remoteCount]（服务器 stats API 返回的电台总数）
+  /// - 国家、语言、标签：本地缓存的远程电台数据统计
+  Widget _buildStatsGrid(BuildContext context) {
+    final localCount = context.watch<LocalStationService>().stations.length;
+    final updateService = context.watch<StationUpdateService>();
+    final cachedCount = updateService.cachedCount;
+    final remoteCount = updateService.remoteCount;
+
+    final countries = _stats?.countries ?? 0;
+    final languages = _stats?.languages ?? 0;
+    final tags = _stats?.tags ?? 0;
+
+    final items = [
+      _StatItem(Icons.radio, '本地电台', '$localCount', '/local_stations'),
+      _StatItem(Icons.storage, '缓存电台', '$cachedCount', '/cached_stations'),
+      _StatItem(Icons.cloud, '远程电台', '$remoteCount', '/local_stations'),
+      _StatItem(Icons.public, '国家', '$countries', '/countries'),
+      _StatItem(Icons.language, '语言', '$languages', '/languages'),
+      _StatItem(Icons.label, '标签', '$tags', '/tags'),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.3,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return InkWell(
+          onTap: () => Navigator.pushNamed(context, item.route),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(item.icon, size: 20, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 4),
+                Text(
+                  item.value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 启动电台数据更新
+  ///
+  /// [service] - 电台更新服务
+  void _startUpdate(BuildContext context, StationUpdateService service) {
+    service.updateAllStations();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('正在后台更新电台列表，屏幕将保持常亮...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 确认重新获取
+  ///
+  /// 弹出确认对话框，清空缓存并重新获取所有电台数据。
+  void _confirmRestart(BuildContext context, StationUpdateService service) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('重新获取'),
+        content: const Text('将清空本地缓存电台并重新从远程获取，确定继续吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              service.restart();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('正在清空缓存并重新获取电台数据...'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 显示更新结果提示
+  ///
+  /// [service] - 电台更新服务
+  void _showUpdateResult(BuildContext context, StationUpdateService service) {
+    if (service.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('更新失败: ${service.errorMessage}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else if (service.cachedCount > 0 && !service.needsUpdate) {
+      // 缓存与远程一致，未获取数据
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('缓存与远程数据一致（${service.cachedCount} 个电台），无需更新'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('更新成功！共获取 ${service.fetchedCount} 个电台'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  /// 构建收藏频道区域
+  Widget _buildFavoritesSection(BuildContext context) {
+    return Consumer<FavoritesService>(
+      builder: (context, favoritesService, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '收藏频道',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (favoritesService.favoriteIds.isNotEmpty)
+                    TextButton(
+                      onPressed: () => _confirmClearFavorites(context),
+                      child: const Text(
+                        '清空',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                ],
+              ),
+              _buildFavoritesList(context),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建收藏列表
+  Widget _buildFavoritesList(BuildContext context) {
+    return Consumer<FavoritesService>(
+      builder: (context, favoritesService, child) {
+        /// 直接使用 FavoritesService 中保存的完整 Station 列表，
+        /// 不再依赖播放历史查找，确保收藏电台可正常播放。
+        final favoriteStations = favoritesService.favorites;
+
+        if (favoriteStations.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text('暂无收藏频道'),
+            ),
+          );
+        }
+
+        return Column(
+          children: favoriteStations
+              .map((station) => StationCard(
+                    station: station,
+                    onTap: () => _navigateToPlayer(context, station),
+                  ))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  /// 构建播放历史区域
+  Widget _buildHistorySection(BuildContext context) {
+    return Consumer<HistoryService>(
+      builder: (context, historyService, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '最近播放',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (historyService.history.isNotEmpty)
+                    TextButton(
+                      onPressed: () => _confirmClearHistory(context),
+                      child: const Text(
+                        '清空',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                ],
+              ),
+              _buildHistoryList(context),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建播放历史列表
+  Widget _buildHistoryList(BuildContext context) {
+    return Consumer<HistoryService>(
+      builder: (context, historyService, child) {
+        if (historyService.history.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text('暂无播放记录'),
+            ),
+          );
+        }
+
+        return Column(
+          children: historyService.history
+              .map((station) => StationCard(
+                    station: station,
+                    onTap: () => _navigateToPlayer(context, station),
+                  ))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  /// 导航到播放页面
+  ///
+  /// [station] - 要播放的电台
+  void _navigateToPlayer(BuildContext context, Station station) {
+    Navigator.pushNamed(
+      context,
+      '/player',
+      arguments: station,
+    );
+  }
+
+  /// 确认清空收藏
+  void _confirmClearFavorites(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认清空'),
+        content: const Text('确定要清空所有收藏频道吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Provider.of<FavoritesService>(context, listen: false).clearAll();
+              Navigator.pop(context);
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 确认清空播放历史
+  void _confirmClearHistory(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认清空'),
+        content: const Text('确定要清空所有播放记录吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Provider.of<HistoryService>(context, listen: false).clearHistory();
+              Navigator.pop(context);
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 统计数据项
+class _StatItem {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String route;
+
+  _StatItem(this.icon, this.label, this.value, this.route);
+}
